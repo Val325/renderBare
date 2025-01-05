@@ -299,6 +299,11 @@ Vec2 isLineIntersectPos(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
 class Triangle{
     private:
         SDL_Renderer *renderer;
+        bool isRender;
+        Vec4 Vertex01Homogen;
+        Vec4 Vertex02Homogen;
+        Vec4 Vertex03Homogen;
+
         Vec3 Vertex01;
         Vec3 Vertex02;
         Vec3 Vertex03;
@@ -316,6 +321,26 @@ class Triangle{
         Vec2 ScreenVertex03;
         cimg_library::CImg<unsigned char> texture;
     public:
+        Triangle(SDL_Renderer *rend, Vec4 Vert1, Vec4 Vert2, Vec4 Vert3){
+            renderer = rend;
+            Vertex01Homogen = Vert1;
+            Vertex02Homogen = Vert2;
+            Vertex03Homogen = Vert3;
+            isRender = true;
+            Vec3 c2(1, 0, 0);
+            Coord03 = c2;
+            
+            Vec3 c1(0, 1, 0);
+            Coord02 = c1;
+
+            Vec3 c0(0, 0, 1);
+            Coord01 = c0;
+
+            st2 = Vec2(0, 0);
+            st1 = Vec2(1, 0);
+            st0 = Vec2(0, 1);
+
+        }
         Triangle(SDL_Renderer *rend, Vec3 Vert1, Vec3 Vert2, Vec3 Vert3){
             renderer = rend;
             Vertex01 = Vert1;
@@ -360,45 +385,119 @@ class Triangle{
             texture = src;
             //std::cout << "height: " << texture.height() << std::endl; 
         }
-        void Projection(){
-            ScreenVertex01 = ProjectVertex(Vertex01);
-            ScreenVertex02 = ProjectVertex(Vertex02);
-            ScreenVertex03 = ProjectVertex(Vertex03);
+        void Projection(Mat4x4 projetion, Mat4x4 camera, Vec3 startPos){
+            //ScreenVertex01 = ProjectVertex(Vertex01);
+            //ScreenVertex02 = ProjectVertex(Vertex02);
+            //ScreenVertex03 = ProjectVertex(Vertex03);
+            Mat4x4 PV = projetion * camera;
+            Vec4 proj_pos1 = PV.multiplyVec4(Vertex01Homogen);
+            Vec3 pos1_NDC = proj_pos1.get_NDC();
+            ScreenVertex01 = pos1_NDC.get_screen_coords();
+            std::cout << "z: " << startPos.get(2) << std::endl; 
+            if (startPos.get(2) > -2.6){
+                isRender = true;
+            }else{
+                isRender = false;        
+            }
+
+            const int overflow = 10000;
+            bool vert1render = true;
+            bool vert2render = true;
+            bool vert3render = true;
+            if (ScreenVertex01.get(0) > overflow){
+                ScreenVertex01.set(0, overflow);
+            }
+            if (ScreenVertex01.get(1) > overflow){
+                ScreenVertex01.set(1, overflow);
+            }
+            if (ScreenVertex01.get(0) < -overflow){
+                ScreenVertex01.set(0, -overflow);
+            }
+            if (ScreenVertex01.get(1) < -overflow){
+                ScreenVertex01.set(1, -overflow);
+            }
+
+
+            /*if (!(ScreenVertex01.get(0) < 512
+                && ScreenVertex01.get(0) > 0
+                && ScreenVertex01.get(1) < 512
+                && ScreenVertex01.get(1) > 0)){
+                vert1render = false;
+            }else{
+                vert1render = true;
+            }*/
+
+            //ScreenVertex01.show();
+
+            Vec4 proj_pos2 = PV.multiplyVec4(Vertex02Homogen);
+            Vec3 pos2_NDC = proj_pos2.get_NDC();
+            ScreenVertex02 = pos2_NDC.get_screen_coords();
+
+            if (ScreenVertex02.get(0) > overflow){
+                ScreenVertex02.set(0, overflow);
+            }
+            if (ScreenVertex02.get(1) > overflow){
+                ScreenVertex02.set(1, overflow);
+            }
+            if (ScreenVertex02.get(0) < -overflow){
+                ScreenVertex02.set(0, -overflow);
+            }
+            if (ScreenVertex02.get(1) < -overflow){
+                ScreenVertex02.set(1, -overflow);
+            }
+
+           /* if (!(ScreenVertex02.get(0) < 512
+                && ScreenVertex02.get(0) > 0
+                && ScreenVertex02.get(1) < 512
+                && ScreenVertex02.get(1) > 0)){
+                vert2render = false;
+            }else{
+                vert2render = true;
+            }*/
+            //ScreenVertex02.show();
+
+            Vec4 proj_pos3 = PV.multiplyVec4(Vertex03Homogen);
+            Vec3 pos3_NDC = proj_pos3.get_NDC();
+            ScreenVertex03 = pos3_NDC.get_screen_coords();
+            if (ScreenVertex03.get(0) > overflow){
+                ScreenVertex03.set(0, overflow);
+            }
+            if (ScreenVertex03.get(1) > overflow){
+                ScreenVertex03.set(1, overflow);
+            }
+            if (ScreenVertex03.get(0) < -overflow){
+                ScreenVertex03.set(0, -overflow);
+            }
+            if (ScreenVertex03.get(1) < -overflow){
+                ScreenVertex03.set(1, -overflow);
+            }
+
+           /* if (!(ScreenVertex03.get(0) < 512
+                && ScreenVertex03.get(0) > 0
+                && ScreenVertex03.get(1) < 512
+                && ScreenVertex03.get(1) > 0)){
+                vert3render = false;
+            }else{
+                vert3render = true;
+            }*/
+            //isRender = vert1render || vert2render || vert3render; 
+            //ScreenVertex03.show();
+
         }
         void Clip(std::vector<std::vector<Vec2>> cilp){
-            //std::vector()
-            //std::cout << "ScreenVertex01: " << ScreenVertex01.get(0) << " " << ScreenVertex01.get(1) << std::endl;  
-            
-            SutherlandHodgman(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, cilp);
-
+            if (isRender){
+                SutherlandHodgman(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, cilp);
+            }
         }
         void Unwrap(){
-            //DEBUG
-            //std::cout << "x: " << ProjectVertex(Vertex01).get(0) << " y:" << ProjectVertex(Vertex01).get(1) << std::endl;
-            //std::cout << "x: " << ProjectVertex(Vertex02).get(0) << " y:" << ProjectVertex(Vertex02).get(1) << std::endl;
-            //std::cout << "x: " << ProjectVertex(Vertex03).get(0) << " y:" << ProjectVertex(Vertex03).get(1) << std::endl;
-            /*for (int x = 0; x < 512; x++){
-                for (int y = 0; y < 512; y++){
-                    Vec2 p = Vec2(x, y);
-                    float w0 = edgeFunction(ScreenVertex02, ScreenVertex03, p);
-                    float w1 = edgeFunction(ScreenVertex03, ScreenVertex01, p);
-                    float w2 = edgeFunction(ScreenVertex01, ScreenVertex02, p);
-                    Vec3 bar = Barycentric(p, ScreenVertex01, ScreenVertex02, ScreenVertex03); 
 
-                    float s = w0 * st0.get(0) + w1 * st1.get(0) + w2 * st2.get(0);
-                    float t = w0 * st0.get(1) + w1 * st1.get(1) + w2 * st2.get(1);
-                    SDL_SetRenderDrawColor(renderer, (int)texture(y, x,0,0), (int)texture(y,x,0,1), (int)texture(y,x ,0,2), 255);
-                    if (w0 >= 0 && w1 >= 0 && w2 >= 0){
-                        SDL_RenderDrawPoint(renderer, x, y);
-
-                    }
-                }
-            }*/ 
         }
         void Render(){
-            DrawLine(renderer, ScreenVertex01, ScreenVertex02);
-            DrawLine(renderer, ScreenVertex01, ScreenVertex03);
-            DrawLine(renderer, ScreenVertex02, ScreenVertex03);
+            if (isRender){
+                DrawLine(renderer, ScreenVertex01, ScreenVertex02);
+                DrawLine(renderer, ScreenVertex01, ScreenVertex03);
+                DrawLine(renderer, ScreenVertex02, ScreenVertex03);
+            }
         }
 
 };
@@ -422,19 +521,23 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 poi
                 perv_point = output[output.size()-1];
             }else{
                 perv_point = output[j-1];
-
             }
 
             if (isLineIntersect(perv_point, current_point,cilpEdge[i][0], cilpEdge[i][1])) {
                 Vec2 Intersecting_point = isLineIntersectPos(perv_point, current_point, cilpEdge[i][0], cilpEdge[i][1]);
-                
+                //std::cout << "if (isLineIntersect(perv_point, current_point,cilpEdge[i][0], cilpEdge[i][1]))" << std::endl; 
                 if (isPointInsideClip(current_point, 512, 512)){
+                    //std::cout << "if (isPointInsideClip(current_point, 512, 512))" << std::endl; 
                     if (!isPointInsideClip(perv_point, 512, 512)){
+                        //std::cout << "if (!isPointInsideClip(perv_point, 512, 512))" << std::endl; 
                         returntriangle.push_back(Intersecting_point);
+ 
                     }
                     returntriangle.push_back(current_point);
+
                 }
                 if (isPointInsideClip(perv_point, 512, 512)){
+                    //std::cout << "if (isPointInsideClip(perv_point, 512, 512))" << std::endl; 
                     returntriangle.push_back(Intersecting_point);
                 }
 
@@ -446,11 +549,17 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 poi
         SDL_RenderDrawPoint(renderer, returntriangle[i].get(0), returntriangle[i].get(1));
 
     }
-
+    if (returntriangle.size() == 3){ 
+        DrawLine(renderer, returntriangle[0], returntriangle[1]);
+        DrawLine(renderer, returntriangle[0], returntriangle[2]);
+        DrawLine(renderer, returntriangle[1], returntriangle[2]);
+    }
     //
     // Rewrite send triangle points
     //
-    //Triangle cliptrig(renderer, returntriangle[0], returntriangle[1], returntriangle[2]);
-    //cliptrig.Render();
+    /*if (returntriangle.size() == 3){
+        Triangle cliptrig(renderer, returntriangle[0], returntriangle[1], returntriangle[2]);
+        cliptrig.Render();
+    }*/
     //cliptrig.Unwrap();
 }
