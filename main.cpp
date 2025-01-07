@@ -54,9 +54,17 @@ int main(void) {
     Vec3 Vertex03(1, -1.5, 4);
 */
 
-    Vec4 Vertex01(-2, -2.5, 3, 1);
+    /*Vec4 Vertex01(-2, -2.5, 3, 1);
     Vec4 Vertex02(-2, -1.5, 4, 1);
-    Vec4 Vertex03(1, -1.5, 4, 1);
+    Vec4 Vertex03(1, -1.5, 4, 1);*/
+
+    Vec4 Vertex01(0, 0, 0, 1);
+    Vec4 Vertex02(0, 0, 1, 1);
+    Vec4 Vertex03(1, 0, 0, 1);
+
+    Vec4 Vertex01tri1(1, 0, 1, 1);
+    Vec4 Vertex02tri1(0, 0, 1, 1);
+    Vec4 Vertex03tri1(1, 0, 0, 1);
     //unsigned int time = SDL_GetTicks();
 
     // Texture coordinates
@@ -64,6 +72,7 @@ int main(void) {
     Vec2 st2(1, 0);
     Vec2 st3(0, 1);
     Triangle trig(renderer, Vertex01, Vertex02, Vertex03);
+    Triangle trig1(renderer, Vertex01tri1, Vertex02tri1, Vertex03tri1);
 
     Vec2 topLeftPoint(0, 0);
     Vec2 topRightPoint(widthWindow, 0);
@@ -105,9 +114,9 @@ int main(void) {
     //https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78
 
     Mat4x4 Camera(
-        1.0f, 0.0f, 0.0f, -xPos,
-        0.0f, 1.0f, 0.0f, -yPos,
-        0.0f, 0.0f, 1.0f, -zPos,
+        0.0f, 0.0f, 1.0f, -xPos,
+        0.0f, -1.0f, 0.0f, -yPos,
+        1.0f, 0.0f, 0.0f, -zPos,
         0.0f, 0.0f, 0.0f, 1.0f 
     ); 
     float aspect_ratio = widthWindow / heightWindow;
@@ -170,6 +179,9 @@ int main(void) {
     std::cout << "-------" << std::endl;
     PV.show();
     std::cout << "-------" << std::endl;*/
+    //std::vector<Triangle> triangles = loadObj(renderer, "8edge.obj");
+    std::vector<Triangle> triangles = loadObj(renderer, "3dmodels/M4.obj");
+    //std::cout << "triangles: " << triangles.size() << std::endl;
     unsigned int time = 0;
 
     while (1) {
@@ -204,7 +216,7 @@ int main(void) {
         cameraPos.set(1, yPos);
         cameraPos.set(2, zPos);
 
-        std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
+        //std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
         if (SDL_PollEvent(&event) != 0){
             if(event.type == SDL_QUIT )
             {
@@ -274,11 +286,20 @@ int main(void) {
         
         //triangle
         //trig.Projection();
-        trig.Clip(cilpEdges);
+        /*trig.Clip(cilpEdges);
         trig.Projection(Projection, Camera, cameraPos);
 
         trig.Render();
 
+        trig1.Clip(cilpEdges);
+        trig1.Projection(Projection, Camera, cameraPos);
+        trig1.Render();*/
+        
+        for (int i = 0; i < triangles.size(); i++){
+            triangles[i].Clip(cilpEdges);
+            triangles[i].Projection(Projection, Camera, cameraPos);
+            triangles[i].Render();
+        }
         /*
         DrawLine(renderer, pos1_Screen, pos2_Screen);
         DrawLine(renderer, pos1_Screen, pos3_Screen);

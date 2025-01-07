@@ -140,6 +140,15 @@ class Vec4{
         int sizeVec(){
             return size;
         }
+        Vec3 get_Vec3(){
+            float res[3];
+            res[0] = vector[0]; 
+            res[1] = vector[1];  
+            res[2] = vector[2];
+        
+            Vec3 vectorNew(res[0], res[1], res[2]);
+            return vectorNew; 
+        }
         Vec3 get_NDC(){
             float res[3];
             res[0] = vector[0] / vector[3]; 

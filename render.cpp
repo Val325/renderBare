@@ -8,6 +8,8 @@
         void Render();
 };*/
 void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 point3, std::vector<std::vector<Vec2>> cilpEdge);
+std::vector<Vec4> loadObj(std::string path);
+
 Vec2 ViewportToCanvas(float x, float y){
 
     float xCanv = (x * widthWindow)/widthViewport;
@@ -293,6 +295,36 @@ Vec2 isLineIntersectPos(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
     } 
     return intersect; 
 }
+//find min vector
+// posTriangle is position
+// elemVec is element vector
+float minVector(std::vector<Vec4> posTriange, int elemVec){
+    // Assume first element as minimum
+    float min = posTriange[0].get(elemVec);
+    for (int i = 1; i < posTriange.size(); i++) {
+      
+      	// Update m if arr[i] is smaller
+        if (posTriange[i].get(elemVec) < min) {
+            min = posTriange[i].get(elemVec); 
+        }
+    }
+    return min;
+}
+
+std::vector<std::string> tokenize(std::string str, char delim){
+    std::vector<std::string> tokens;
+    std::string temp = "";
+    for(int i = 0; i < str.length(); i++){
+        if(str[i] == delim){
+            tokens.push_back(temp);
+            temp = "";
+        }
+        else
+            temp += str[i];           
+    }
+    tokens.push_back(temp);
+    return tokens;
+}
 
 
 
@@ -393,8 +425,28 @@ class Triangle{
             Vec4 proj_pos1 = PV.multiplyVec4(Vertex01Homogen);
             Vec3 pos1_NDC = proj_pos1.get_NDC();
             ScreenVertex01 = pos1_NDC.get_screen_coords();
-            std::cout << "z: " << startPos.get(2) << std::endl; 
-            if (startPos.get(2) > -2.6){
+            
+            Vec3 pos1 = Vertex01Homogen.get_Vec3();
+            //std::cout << "pos1: " << std::endl;            
+            //pos1.show();
+            Vec3 pos2 = Vertex02Homogen.get_Vec3();
+            //std::cout << "pos2: " << std::endl;            
+            //pos2.show();
+            Vec3 pos3 = Vertex03Homogen.get_Vec3();
+            //std::cout << "pos3: " << std::endl;
+            //pos3.show();
+            //std::cout << "startPos: " << std::endl;
+            //startPos.show();
+            //std::vector<Vec4> posTriangeAll;
+            //posTriangeAll.push_back(Vertex01Homogen);
+            //posTriangeAll.push_back(Vertex02Homogen);
+            //posTriangeAll.push_back(Vertex03Homogen);
+            //float posrender = minVector(posTriangeAll, 2);
+            //std::cout << "z: " << startPos.get(2) << std::endl;
+            //std::cout << "pos z: " << posrender << std::endl; 
+            if (startPos.get(2) > -Vertex01Homogen.get(2)
+                & startPos.get(2) > -Vertex02Homogen.get(2)
+                & startPos.get(2) > -Vertex03Homogen.get(2)){
                 isRender = true;
             }else{
                 isRender = false;        
@@ -492,6 +544,14 @@ class Triangle{
         void Unwrap(){
 
         }
+        void Show(){
+            std::cout << "triangle: " << std::endl;
+            Vertex01Homogen.show();
+            Vertex02Homogen.show();
+            Vertex03Homogen.show();
+            std::cout << "----------------" << std::endl;
+
+        }
         void Render(){
             if (isRender){
                 DrawLine(renderer, ScreenVertex01, ScreenVertex02);
@@ -501,6 +561,74 @@ class Triangle{
         }
 
 };
+
+std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
+    std::ifstream file_model(path);
+    std::vector<std::pair<Vec4, int>> obj_verticies;
+    std::vector<Triangle> faces;
+
+    if (!file_model.is_open()) {
+        std::cerr << "Error opening the file!";
+    }
+    std::string file_model_data;
+    int numVertex = 1;
+    while (std::getline(file_model, file_model_data))
+    {
+        std::vector<std::string> data_model = tokenize(file_model_data, ' ');
+        //std::cout << data_model[0] << std::endl;
+        if (data_model[0].compare("v") == 0){
+            std::pair<Vec4, int> VertexData;
+             
+            std::cout << "vertex: " << data_model[1] << " " << data_model[2] << " " << data_model[3] << std::endl;
+            Vec4 Vertex(std::stof(data_model[1]), std::stof(data_model[2]), std::stof(data_model[3]), 1.0f);
+            VertexData.first = Vertex;
+            VertexData.second = numVertex;
+            //Triangle trig(rend, data_model[1], data_model[2], data_model[3]);
+            obj_verticies.push_back(VertexData);
+            numVertex++;
+        }
+        if (data_model[0].compare("f") == 0){
+
+            Vec4 Vertex1;
+            Vec4 Vertex2;
+            Vec4 Vertex3;
+            //std::cout << "file: " << data_model[1] << " " << data_model[2] << " " << data_model[3] << std::endl; 
+            for (int i = 0; i < obj_verticies.size();i++){
+                
+
+
+                if (obj_verticies[i].second == std::stoi(data_model[1])){
+                    /*std::cout << "vertex id: " << obj_verticies[i].second << std::endl;
+                    std::cout << "vertex: " << obj_verticies[i].first.get(0) << " " << obj_verticies[i].first.get(1) << " " << obj_verticies[i].first.get(2) << std::endl; 
+                    std::cout << "data_model: " << data_model[1] << std::endl; 
+                    */
+                    Vertex1 = obj_verticies[i].first; 
+                }
+                if (obj_verticies[i].second == std::stoi(data_model[2])){
+                    /*std::cout << "vertex id: " << obj_verticies[i].second << std::endl;
+                    std::cout << "vertex: " << obj_verticies[i].first.get(0) << " " << obj_verticies[i].first.get(1) << " " << obj_verticies[i].first.get(2) << std::endl; 
+                    std::cout << "data_model: " << data_model[2] << std::endl; 
+                    */
+                    Vertex2 = obj_verticies[i].first;
+                }
+                if (obj_verticies[i].second == std::stoi(data_model[3])){
+                    /*std::cout << "vertex id: " << obj_verticies[i].second << std::endl;
+                    std::cout << "vertex: " << obj_verticies[i].first.get(0) << " " << obj_verticies[i].first.get(1) << " " << obj_verticies[i].first.get(2) << std::endl; 
+                    std::cout << "data_model: " << data_model[3] << std::endl; 
+                    */
+                    Vertex3 = obj_verticies[i].first;
+                }
+            }
+            Triangle trig(rend, Vertex1, Vertex2, Vertex3);
+            faces.push_back(trig);
+            
+        }
+    }
+    /*for (int i = 0; i < faces.size();){
+        faces[i].Show();
+    }*/
+    return faces;
+}
 
 void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 point3, std::vector<std::vector<Vec2>> cilpEdge){
     std::vector<Vec2> output;
@@ -554,6 +682,7 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 poi
         DrawLine(renderer, returntriangle[0], returntriangle[2]);
         DrawLine(renderer, returntriangle[1], returntriangle[2]);
     }
+    //std::cout << "size triangle: " << returntriangle.size();
     //
     // Rewrite send triangle points
     //
