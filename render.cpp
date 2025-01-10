@@ -1,4 +1,32 @@
-#include <bits/stdc++.h>
+#include <limits>
+#include <cmath>
+
+template <class Vec>
+Vec3 Barycentric(Vec p, Vec a, Vec b, Vec c)
+{
+    Vec v0 = b - a, v1 = c - a, v2 = p - a;
+    float d00 = Dot(v0, v0);
+    float d01 = Dot(v0, v1);
+    float d11 = Dot(v1, v1);
+    float d20 = Dot(v2, v0);
+    float d21 = Dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+
+    float res[3];
+    // v = (d11 * d20 - d01 * d21) / denom
+    res[0] = (d11 * d20 - d01 * d21) / denom;
+    // w = (d00 * d21 - d01 * d20) / denom;
+    res[1] = (d00 * d21 - d01 * d20) / denom;
+    //u = 1.0f - v - w; 
+    res[2] = 1.0f - res[0] - res[1];
+    
+    Vec3 vectorNew(res[0], res[1], res[2]);
+    return vectorNew; 
+}
+
+#include "primitive/line.cpp"
+#include "primitive/triangle.cpp"
+#include "utils/intersection.cpp"
 /*class Triangle{
     public:
         Triangle(SDL_Renderer *rend, Vec3 Vert1, Vec3 Vert2, Vec3 Vert3);
@@ -25,89 +53,6 @@ Vec2 ProjectVertex(Vec3 v){
     return pos; 
 }
 
-void DrawLineLow(SDL_Renderer *renderer, Vec2 start, Vec2 end){
-    int dx = end.get(0) - start.get(0);
-    int dy = end.get(1) - start.get(1);
-    int yi = 1;
-
-    if (dy < 0){
-        yi = -1;
-        dy = -dy;
-    }
-
-    int D = (2*dy)-dx;
-    int y = start.get(1);
-  
-    for (int x = start.get(0); x < end.get(0); x++){
-        //if (x > 0 && y > 0 && x < widthWindow && y < heightWindow){
-        SDL_RenderDrawPoint(renderer, x, y); 
-        //}       
-
-        if (D > 0){
-            y = y + yi;
-            D = D + (2 * (dy - dx));
-        }else{
-            D = D + 2*dy;
-        }
-
-    }
-    
-
-}
-
-
-void DrawLineHigh(SDL_Renderer *renderer, Vec2 start, Vec2 end){
-    int dx = end.get(0) - start.get(0);
-    int dy = end.get(1) - start.get(1);
-    int xi = 1;
-
-    if (dx < 0){
-        xi = -1;
-        dx = -dx;
-    }
-
-    int D = (2*dx)-dy;
-    int x = start.get(0);
-    /*
-    std::cout << "x: " << x << std::endl;
-    std::cout << "start x: " << (int)start.get(0) << std::endl;
-    std::cout << "start y: " << (int)start.get(1) << std::endl;
-    std::cout << "end x: " << (int)end.get(0) << std::endl;
-    std::cout << "end y: " << (int)end.get(1) << std::endl;
-    */
-    for (int y = (int)start.get(1); y < (int)end.get(1); y++){
-        //if (x > 0 && y > 0 && x < widthWindow && y < heightWindow){
-        SDL_RenderDrawPoint(renderer, x, y); 
-        //}
-        if (D > 0){
-            x = x + xi;
-            D = D + (2 * (dx - dy));
-        }else{
-            D = D + 2*dx;
-        }
-        //std::cout << "y: " << y << std::endl;
-        
-    }
-    
-}
-
-void DrawLine(SDL_Renderer *renderer, Vec2 start, Vec2 end){
-
-    if (abs(end.get(1) - start.get(1)) < abs(end.get(0) - start.get(0))){
-        if (start.get(0) > end.get(0)){
-            DrawLineLow(renderer, end, start);
-        }else{
-            DrawLineLow(renderer, start, end);
-        }
-    }else{
-        if (start.get(1) > end.get(1)){
-            DrawLineHigh(renderer, end, start);
-        }else{
-            DrawLineHigh(renderer, start, end);
-        }
-    }
-
-}
 
 template <class Vec>
 inline float edgeFunction(Vec a, Vec b, Vec c) {
@@ -123,178 +68,8 @@ float Dot(Vec v1, Vec v2) {
     return result;
 }
 
-template <class Vec>
-Vec3 Barycentric(Vec p, Vec a, Vec b, Vec c)
-{
-    Vec v0 = b - a, v1 = c - a, v2 = p - a;
-    float d00 = Dot(v0, v0);
-    float d01 = Dot(v0, v1);
-    float d11 = Dot(v1, v1);
-    float d20 = Dot(v2, v0);
-    float d21 = Dot(v2, v1);
-    float denom = d00 * d11 - d01 * d01;
-
-    float res[3];
-    // v = (d11 * d20 - d01 * d21) / denom
-    res[0] = (d11 * d20 - d01 * d21) / denom;
-    // w = (d00 * d21 - d01 * d20) / denom;
-    res[1] = (d00 * d21 - d01 * d20) / denom;
-    //u = 1.0f - v - w; 
-    res[2] = 1.0f - res[0] - res[1];
-    
-    Vec3 vectorNew(res[0], res[1], res[2]);
-    return vectorNew; 
-}
-
-bool isExistIntersection(Vec2 point1, Vec2 point2, int xSize, int ySize){
-    bool xInClip;
-    bool yInClip;
-    if (point1.get(0) >= 0 && point1.get(0) < xSize){
-        xInClip = true;
-    }else{
-        xInClip = false;
-    }
-
-    if (point2.get(0) >= 0 && point2.get(0) < ySize){
-        yInClip = true;
-    }else{
-        yInClip = false;
-    }
-
-    return xInClip ^ yInClip; 
-}
-// Given three collinear points p, q, r, the function checks if 
-// point q lies on line segment 'pr' 
-bool onSegment(Vec2 p, Vec2 q, Vec2 r) 
-{ 
-    if (q.get(0) <= std::max(p.get(0), r.get(0)) && q.get(0) >= std::min(p.get(0), r.get(0)) && 
-        q.get(1) <= std::max(p.get(1), r.get(1)) && q.get(1) >= std::min(p.get(1), r.get(1))) 
-       return true; 
-  
-    return false; 
-} 
-  
-// To find orientation of ordered triplet (p, q, r). 
-// The function returns following values 
-// 0 --> p, q and r are collinear 
-// 1 --> Clockwise 
-// 2 --> Counterclockwise 
-int orientation(Vec2 p, Vec2 q, Vec2 r) 
-{ 
-    // See https://www.geeksforgeeks.org/orientation-3-ordered-points/ 
-    // for details of below formula. 
-    int val = (q.get(1) - p.get(1)) * (r.get(0) - q.get(0)) - 
-              (q.get(0) - p.get(0)) * (r.get(1) - q.get(1)); 
-  
-    if (val == 0) return 0;  // collinear 
-  
-    return (val > 0)? 1: 2; // clock or counterclock wise 
-} 
-  
 
 
-  
-//https://www.cs.ucr.edu/~eldawy/19SCS133/notes/line-line-intersection.pdf
-// The main function that returns true if line segment 'p1q1' 
-// and 'p2q2' intersect. 
-bool isLineIntersect(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
-    // Find the four orientations needed for general and 
-    // special cases 
-    int o1 = orientation(point1, point2, point3); 
-    int o2 = orientation(point1, point2, point4); 
-    int o3 = orientation(point3, point4, point1); 
-    int o4 = orientation(point3, point4, point2); 
-    
-    // General case: lines intersect if they have different
-    // orientations
-    /*if (o1 != o2 && o3 != o4) {
-      
-        // Compute intersection point
-        double a1 = point2.get(1) - point1.get(1);
-        double b1 = point1.get(0) - point2.get(0);
-        double c1 = a1 * point1.get(0) + b1 * point1.get(1);
-
-        double a2 = point4.get(1) - point3.get(1);
-        double b2 = point3.get(0) - point4.get(0);
-        double c2 = a2 * point3.get(0) + b2 * point3.get(1);
-
-        double determinant = a1 * b2 - a2 * b1;
-
-        if (determinant != 0) {
-            std::cout << "\n";
-            std::cout << "x: " << (c1 * b2 - c2 * b1) / determinant << std::endl;
-            std::cout << " y: " << (a1 * c2 - a2 * c1) / determinant << std::endl;
-            std::cout << "\n";
-
-        }
-    } */
-    // General case 
-    if (o1 != o2 && o3 != o4) 
-        return true; 
-  
-    // Special Cases 
-    // p1, q1 and p2 are collinear and p2 lies on segment p1q1 
-    if (o1 == 0 && onSegment(point1, point3, point2)) return true; 
-  
-    // p1, q1 and q2 are collinear and q2 lies on segment p1q1 
-    if (o2 == 0 && onSegment(point1, point4, point2)) return true; 
-  
-    // p2, q2 and p1 are collinear and p1 lies on segment p2q2 
-    if (o3 == 0 && onSegment(point3, point1, point4)) return true; 
-  
-     // p2, q2 and q1 are collinear and q1 lies on segment p2q2 
-    if (o4 == 0 && onSegment(point3, point2, point4)) return true; 
-  
-    return false; // Doesn't fall in any of the above cases 
-}
-
-bool isPointInsideClip(Vec2 point, int Xsize, int Ysize){
-    if (point.get(0) < Xsize 
-        && point.get(0) > 0 
-        && point.get(1) < Ysize
-        && point.get(1) > 0){
-        return true;
-    }
-    return false;
-}
-
-Vec2 isLineIntersectPos(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
-    Vec2 intersect;
-
-    // Find the four orientations needed for general and 
-    // special cases 
-    int o1 = orientation(point1, point2, point3); 
-    int o2 = orientation(point1, point2, point4); 
-    int o3 = orientation(point3, point4, point1); 
-    int o4 = orientation(point3, point4, point2); 
-    
-    // General case: lines intersect if they have different
-    // orientations
-    if (o1 != o2 && o3 != o4) {
-      
-        // Compute intersection point
-        double a1 = point2.get(1) - point1.get(1);
-        double b1 = point1.get(0) - point2.get(0);
-        double c1 = a1 * point1.get(0) + b1 * point1.get(1);
-
-        double a2 = point4.get(1) - point3.get(1);
-        double b2 = point3.get(0) - point4.get(0);
-        double c2 = a2 * point3.get(0) + b2 * point3.get(1);
-
-        double determinant = a1 * b2 - a2 * b1;
-
-        if (determinant != 0) {
-            intersect.set(0, (c1 * b2 - c2 * b1) / determinant);
-            intersect.set(1, (a1 * c2 - a2 * c1) / determinant);
-
-            /*std::cout << "\n";
-            std::cout << "x: " << (c1 * b2 - c2 * b1) / determinant << std::endl;
-            std::cout << " y: " << (a1 * c2 - a2 * c1) / determinant << std::endl;
-            std::cout << "\n";*/
-        }
-    } 
-    return intersect; 
-}
 //find min vector
 // posTriangle is position
 // elemVec is element vector
@@ -326,24 +101,117 @@ std::vector<std::string> tokenize(std::string str, char delim){
     return tokens;
 }
 
+/* A utility function to calculate area of triangle formed by (x1, y1), 
+   (x2, y2) and (x3, y3) */
+float area(float x1, float y1, float x2, float y2, float x3, float y3)
+{
+   return abs((x1*(y2-y3) + x2*(y3-y1)+ x3*(y1-y2))/2.0);
+}
+  
+/* A function to check whether point P(x, y) lies inside the triangle formed 
+   by A(x1, y1), B(x2, y2) and C(x3, y3) */
+bool isInside(float x1, float y1, float x2, float y2, float x3, float y3, float x, float y)
+{   
+   /* Calculate area of triangle ABC */
+   float A = area (x1, y1, x2, y2, x3, y3);
+  
+   /* Calculate area of triangle PBC */ 
+   float A1 = area (x, y, x2, y2, x3, y3);
+  
+   /* Calculate area of triangle PAC */ 
+   float A2 = area (x1, y1, x, y, x3, y3);
+  
+   /* Calculate area of triangle PAB */  
+   float A3 = area (x1, y1, x2, y2, x, y);
+    
+   /* Check if sum of A1, A2 and A3 is same as A */
+   return (A == A1 + A2 + A3);
+}
 
+bool isTriangleDrawn(Vec2 ScreenVertex01,Vec2 ScreenVertex02,Vec2 ScreenVertex03){
+    bool firstVertex = false;
+    bool firstVertex1 = false;
+    bool firstVertex2 = false;
+    bool firstVertex3 = false;
+    bool firstVertex4 = false;
+
+    if (ScreenVertex01.get(0) > 0){
+        firstVertex1 = true; 
+    }
+    if (ScreenVertex01.get(1) > 0){
+        firstVertex2 = true;     
+    }
+    if (ScreenVertex01.get(0) < 512){
+        firstVertex3 = true; 
+    }
+    if (ScreenVertex01.get(1) < 512){
+        firstVertex4 = true; 
+    }
+    firstVertex = firstVertex1 && firstVertex2 && firstVertex3 && firstVertex4; 
+
+    bool secondVertex = false;
+    bool secondVertex1 = false;
+    bool secondVertex2 = false;
+    bool secondVertex3 = false;
+    bool secondVertex4 = false;
+
+    if (ScreenVertex02.get(0) > 0){
+        secondVertex1 = true; 
+    }
+    if (ScreenVertex02.get(1) > 0){
+        secondVertex2 = true;  
+    }
+    if (ScreenVertex02.get(0) < 512){
+        secondVertex3 = true;     
+    }
+    if (ScreenVertex02.get(1) < 512){
+        secondVertex4 = true; 
+    }
+    secondVertex = secondVertex1 && secondVertex2 && secondVertex3 && secondVertex4;
+
+    bool thirdVertex = false;
+    bool thirdVertex1 = false;
+    bool thirdVertex2 = false;
+    bool thirdVertex3 = false;
+    bool thirdVertex4 = false;
+
+    if (ScreenVertex03.get(0) > 0){
+        thirdVertex1 = true; 
+    }
+    if (ScreenVertex03.get(1) > 0){
+        thirdVertex2 = true;  
+    }
+    if (ScreenVertex03.get(0) < 512){
+        thirdVertex3 = true; 
+    }
+    if (ScreenVertex03.get(1) < 512){
+        thirdVertex4 = true; 
+    }
+    thirdVertex = thirdVertex1 && thirdVertex2 && thirdVertex3 && thirdVertex4; 
+    return  firstVertex && secondVertex && thirdVertex; 
+}
 
 class Triangle{
     private:
         SDL_Renderer *renderer;
         bool isRender;
+        float zDistance;
+        Vec3 MidPoint;
+
+        // 4 dimension coordinate
         Vec4 Vertex01Homogen;
         Vec4 Vertex02Homogen;
         Vec4 Vertex03Homogen;
-
+        
+        // 3 dimension coordinate
         Vec3 Vertex01;
         Vec3 Vertex02;
         Vec3 Vertex03;
-
         Vec3 Coord01;
         Vec3 Coord02;
         Vec3 Coord03;
-
+        
+        //texture coordinate
         Vec2 st2;
         Vec2 st1;
         Vec2 st0;
@@ -352,6 +220,7 @@ class Triangle{
         Vec2 ScreenVertex02;
         Vec2 ScreenVertex03;
         cimg_library::CImg<unsigned char> texture;
+        triangleInfo trig_struct;
     public:
         Triangle(SDL_Renderer *rend, Vec4 Vert1, Vec4 Vert2, Vec4 Vert3){
             renderer = rend;
@@ -359,6 +228,13 @@ class Triangle{
             Vertex02Homogen = Vert2;
             Vertex03Homogen = Vert3;
             isRender = true;
+
+            Vec3 centerTiangle((Vert1.get(0) + Vert2.get(0) + Vert3.get(0))/3, 
+                    (Vert1.get(1) + Vert2.get(1) + Vert3.get(1))/3, 
+                    (Vert1.get(2) + Vert2.get(2) + Vert3.get(2))/3);
+            MidPoint = centerTiangle; 
+
+            //zDistance =
             Vec3 c2(1, 0, 0);
             Coord03 = c2;
             
@@ -541,8 +417,43 @@ class Triangle{
                 SutherlandHodgman(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, cilp);
             }
         }
-        void Unwrap(){
+        void Zbuffer(float **z_buffer, Vec3 startPos){
+            //Vec3 DistanceZ = MidPoint - startPos;
+            //float DistanceZ = sqrt(pow(MidPoint.get(0) - startPos.get(0),2)+pow(MidPoint.get(1) - startPos.get(1),2)+pow(MidPoint.get(2) - startPos.get(2),2));
+            //float DistanceZ = 0;
+            //zDistance = DistanceZ;
 
+            
+            /*if (isTriangleDrawn(ScreenVertex01,ScreenVertex02,ScreenVertex03)){
+                for (int x = 0;x < 512; x++){
+                    for (int y = 0;y < 512; y++){
+                        if (isInside(ScreenVertex01.get(0), ScreenVertex01.get(1), 
+                                    ScreenVertex02.get(0), ScreenVertex02.get(1), 
+                                    ScreenVertex03.get(0), ScreenVertex03.get(1), 
+                                    x, y)){
+                            Vec2 point(x, y); 
+                            Vec3 baricentric = Barycentric(point, ScreenVertex01, ScreenVertex02, ScreenVertex03);
+                            baricentric.show();
+                        }
+                    }
+                }
+            }*/
+        }
+        void Unwrap(float **z_buffer){
+            
+            trig_struct.vert1 = Vertex01; 
+            trig_struct.vert2 = Vertex02;
+            trig_struct.vert3 = Vertex03;
+            trig_struct.ScreenVert1 = ScreenVertex01; 
+            trig_struct.ScreenVert2 = ScreenVertex02;
+            trig_struct.ScreenVert3 = ScreenVertex03;
+
+            DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, z_buffer, trig_struct);
+        }
+        void WrapTexture(float **z_buffer){
+            //DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03);
+
+            //
         }
         void Show(){
             std::cout << "triangle: " << std::endl;
@@ -552,11 +463,23 @@ class Triangle{
             std::cout << "----------------" << std::endl;
 
         }
-        void Render(){
+        void Render(float **z_buffer){
+            /*struct triangleInfo{
+                Vec3 vert1;
+                Vec3 vert2;
+                Vec3 vert3;
+            };*/
+            trig_struct.vert1 = Vertex01; 
+            trig_struct.vert2 = Vertex02;
+            trig_struct.vert3 = Vertex03;
+            trig_struct.ScreenVert1 = ScreenVertex01; 
+            trig_struct.ScreenVert2 = ScreenVertex02;
+            trig_struct.ScreenVert3 = ScreenVertex03;
+
             if (isRender){
-                DrawLine(renderer, ScreenVertex01, ScreenVertex02);
-                DrawLine(renderer, ScreenVertex01, ScreenVertex03);
-                DrawLine(renderer, ScreenVertex02, ScreenVertex03);
+                DrawLine(renderer, ScreenVertex01, ScreenVertex02, z_buffer,  trig_struct);
+                DrawLine(renderer, ScreenVertex01, ScreenVertex03, z_buffer,  trig_struct);
+                DrawLine(renderer, ScreenVertex02, ScreenVertex03, z_buffer,  trig_struct);
             }
         }
 
@@ -672,7 +595,7 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 poi
             }
         }
     }
-    for (int i = 0; i < returntriangle.size(); i++){
+    /*for (int i = 0; i < returntriangle.size(); i++){
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
         SDL_RenderDrawPoint(renderer, returntriangle[i].get(0), returntriangle[i].get(1));
 
@@ -681,7 +604,7 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2 point1, Vec2 point2, Vec2 poi
         DrawLine(renderer, returntriangle[0], returntriangle[1]);
         DrawLine(renderer, returntriangle[0], returntriangle[2]);
         DrawLine(renderer, returntriangle[1], returntriangle[2]);
-    }
+    }*/
     //std::cout << "size triangle: " << returntriangle.size();
     //
     // Rewrite send triangle points

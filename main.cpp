@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <SDL2/SDL.h>
+#include <bits/stdc++.h>
 #include <vector>
 const int widthWindow = 512;
 const int heightWindow = 512;
@@ -15,6 +16,16 @@ float far = 100;
 
 #include "include/CImg.h"
 #include "matrix.cpp"
+
+struct triangleInfo{
+    Vec3 vert1;
+    Vec3 vert2;
+    Vec3 vert3;
+
+    Vec2 ScreenVert1;
+    Vec2 ScreenVert2;
+    Vec2 ScreenVert3;
+};
 #include "render.cpp"
 
 #define PI 3.14159265
@@ -27,6 +38,9 @@ int main(void) {
     SDL_Event event;
     SDL_Renderer *renderer;
     SDL_Window *window;
+    //std::vector<std::vector<float>> *z_buffer(widthWindow, *std::vector<float>(heightWindow, std::numeric_limits<float>::infinity()));
+    
+
 
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 )
     {
@@ -61,10 +75,11 @@ int main(void) {
     Vec4 Vertex01(0, 0, 0, 1);
     Vec4 Vertex02(0, 0, 1, 1);
     Vec4 Vertex03(1, 0, 0, 1);
-
-    Vec4 Vertex01tri1(1, 0, 1, 1);
-    Vec4 Vertex02tri1(0, 0, 1, 1);
-    Vec4 Vertex03tri1(1, 0, 0, 1);
+    
+    float zOffset = 0.5;
+    Vec4 Vertex01tri1(1, 0, 1-zOffset, 1);
+    Vec4 Vertex02tri1(0, 0, 1-zOffset, 1);
+    Vec4 Vertex03tri1(1, 0, 0-zOffset, 1);
     //unsigned int time = SDL_GetTicks();
 
     // Texture coordinates
@@ -180,7 +195,7 @@ int main(void) {
     PV.show();
     std::cout << "-------" << std::endl;*/
     //std::vector<Triangle> triangles = loadObj(renderer, "8edge.obj");
-    std::vector<Triangle> triangles = loadObj(renderer, "3dmodels/M4.obj");
+    //std::vector<Triangle> triangles = loadObj(renderer, "3dmodels/M4.obj");
     //std::cout << "triangles: " << triangles.size() << std::endl;
     unsigned int time = 0;
 
@@ -189,6 +204,15 @@ int main(void) {
         unsigned int delta_time = now - time;
         //bool canMove;
         time = now;
+    float **z_buffer = new float*[widthWindow];
+    for(int i = 0; i < widthWindow; ++i) {
+        z_buffer[i] = new float[heightWindow];
+    }
+    for (int i = 0; i < widthWindow; ++i){
+        for (int j = 0; j < heightWindow; ++j){
+            z_buffer[i][j] = std::numeric_limits<float>::infinity(); 
+        }
+    }
         /*if (delta_time > 1000){
             canMove = true;
             time = now;
@@ -216,7 +240,6 @@ int main(void) {
         cameraPos.set(1, yPos);
         cameraPos.set(2, zPos);
 
-        //std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
         if (SDL_PollEvent(&event) != 0){
             if(event.type == SDL_QUIT )
             {
@@ -225,6 +248,8 @@ int main(void) {
                 SDL_Quit();
             }
             if (event.type == SDL_KEYDOWN){
+                std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
+
                 switch(event.key.keysym.sym)
                 {
                     case SDLK_ESCAPE:
@@ -285,21 +310,28 @@ int main(void) {
         DrawLine(renderer, ProjectVertex(vDf), ProjectVertex(vDb));*/
         
         //triangle
-        //trig.Projection();
-        /*trig.Clip(cilpEdges);
+        trig.Clip(cilpEdges);
         trig.Projection(Projection, Camera, cameraPos);
+        trig.Zbuffer(z_buffer, cameraPos);        
+        trig.Render(z_buffer);
+        trig.Unwrap(z_buffer);        
 
-        trig.Render();
+        //trig.WrapTexture(z_buffer);
 
+        
+        SDL_SetRenderDrawColor(renderer, 255, 128, 0, 255);
         trig1.Clip(cilpEdges);
         trig1.Projection(Projection, Camera, cameraPos);
-        trig1.Render();*/
+        trig1.Zbuffer(z_buffer, cameraPos);        
+        trig1.Unwrap(z_buffer);
+        trig1.Render(z_buffer);
         
-        for (int i = 0; i < triangles.size(); i++){
+        /*for (int i = 0; i < 4; i++){
             triangles[i].Clip(cilpEdges);
             triangles[i].Projection(Projection, Camera, cameraPos);
+            triangles[i].Unwrap();
             triangles[i].Render();
-        }
+        }*/
         /*
         DrawLine(renderer, pos1_Screen, pos2_Screen);
         DrawLine(renderer, pos1_Screen, pos3_Screen);
@@ -313,13 +345,17 @@ int main(void) {
         */
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-
+        for(int i = 0; i < widthWindow; ++i) {
+            delete[] z_buffer[i];
+        }
+        delete[] z_buffer;
         SDL_RenderPresent(renderer);
 
 
 
 
     }
+
 
     SDL_RenderPresent(renderer);
     SDL_DestroyRenderer(renderer);
