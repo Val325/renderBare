@@ -1,4 +1,4 @@
-bool isExistIntersection(Vec2 point1, Vec2 point2, int xSize, int ySize){
+bool isExistIntersection(Vec2<float> point1, Vec2<float> point2, int xSize, int ySize){
     bool xInClip;
     bool yInClip;
     if (point1.get(0) >= 0 && point1.get(0) < xSize){
@@ -17,7 +17,7 @@ bool isExistIntersection(Vec2 point1, Vec2 point2, int xSize, int ySize){
 }
 // Given three collinear points p, q, r, the function checks if 
 // point q lies on line segment 'pr' 
-bool onSegment(Vec2 p, Vec2 q, Vec2 r) 
+bool onSegment(Vec2<float> p, Vec2<float> q, Vec2<float> r) 
 { 
     if (q.get(0) <= std::max(p.get(0), r.get(0)) && q.get(0) >= std::min(p.get(0), r.get(0)) && 
         q.get(1) <= std::max(p.get(1), r.get(1)) && q.get(1) >= std::min(p.get(1), r.get(1))) 
@@ -31,7 +31,7 @@ bool onSegment(Vec2 p, Vec2 q, Vec2 r)
 // 0 --> p, q and r are collinear 
 // 1 --> Clockwise 
 // 2 --> Counterclockwise 
-int orientation(Vec2 p, Vec2 q, Vec2 r) 
+int orientation(Vec2<float> p, Vec2<float> q, Vec2<float> r) 
 { 
     // See https://www.geeksforgeeks.org/orientation-3-ordered-points/ 
     // for details of below formula. 
@@ -49,7 +49,7 @@ int orientation(Vec2 p, Vec2 q, Vec2 r)
 //https://www.cs.ucr.edu/~eldawy/19SCS133/notes/line-line-intersection.pdf
 // The main function that returns true if line segment 'p1q1' 
 // and 'p2q2' intersect. 
-bool isLineIntersect(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
+bool isLineIntersect(Vec2<float> point1, Vec2<float> point2, Vec2<float> point3, Vec2<float> point4){
     // Find the four orientations needed for general and 
     // special cases 
     int o1 = orientation(point1, point2, point3); 
@@ -100,7 +100,7 @@ bool isLineIntersect(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
     return false; // Doesn't fall in any of the above cases 
 }
 
-bool isPointInsideClip(Vec2 point, int Xsize, int Ysize){
+bool isPointInsideClip(Vec2<float> point, int Xsize, int Ysize){
     if (point.get(0) < Xsize 
         && point.get(0) > 0 
         && point.get(1) < Ysize
@@ -110,8 +110,8 @@ bool isPointInsideClip(Vec2 point, int Xsize, int Ysize){
     return false;
 }
 
-Vec2 isLineIntersectPos(Vec2 point1, Vec2 point2, Vec2 point3, Vec2 point4){
-    Vec2 intersect;
+Vec2<float> isLineIntersectPos(Vec2<float> point1, Vec2<float> point2, Vec2<float> point3, Vec2<float> point4){
+    Vec2<float> intersect;
 
     // Find the four orientations needed for general and 
     // special cases 

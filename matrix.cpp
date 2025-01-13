@@ -1,22 +1,22 @@
-
+template <class TypeNum>
 class Vec2{
     private:
-        float vector[2];
+        TypeNum vector[2];
         int size;
     public:
         Vec2(){
             vector[2] = { 0 };
             memset(vector, 0, sizeof vector);
         }
-        Vec2(float one, float two){
+        Vec2(TypeNum one, TypeNum two){
             vector[0] = one;
             vector[1] = two;
             size = 2;
         }
-        void set(int i, float number){
+        void set(int i, TypeNum number){
             vector[i] = number;
         }
-        float get(int i){
+        TypeNum get(int i){
             return vector[i];
         }
         void increment(int i){
@@ -31,17 +31,17 @@ class Vec2{
             }
             std::cout << "\n";
         }
-        Vec2 operator-(Vec2 &vec2)
+        Vec2<TypeNum> operator-(Vec2<TypeNum> &vec2)
         {
-            float res[2];
+            TypeNum res[2];
             res[0] = res[0] - vec2.get(0);
             res[1] = res[1] - vec2.get(1);
             Vec2 vectorNew(res[0], res[1]);
             return vectorNew; 
         }
-        Vec2 operator+(Vec2 &vec2)
+        Vec2<TypeNum> operator+(Vec2<TypeNum> &vec2)
         {
-            float res[2];
+            TypeNum res[2];
             res[0] = res[0] + vec2.get(0);
             res[1] = res[1] + vec2.get(1);
             Vec2 vectorNew(res[0], res[1]);
@@ -49,26 +49,27 @@ class Vec2{
         }
 };
 
+template <class TypeNum>
 class Vec3{
     private:
-        float vector[3];
+        TypeNum vector[3];
         int size;
     public:
         Vec3(){
             vector[3] = { 0 };
             memset(vector, 0, sizeof vector);
         }
-        Vec3(float one, float two, float three){
+        Vec3(TypeNum one, TypeNum two, TypeNum three){
             vector[0] = one;
             vector[1] = two;
             vector[2] = three;
             size = 3;
 
         }
-        void set(int i, float number){
+        void set(int i, TypeNum number){
             vector[i] = number;
         }
-        float get(int i){
+        TypeNum get(int i){
             return vector[i];
         }
         int sizeVec(){
@@ -80,36 +81,37 @@ class Vec3{
             }
             std::cout << "\n";
         }
-        Vec2 get_screen_coords(){
-            float x = ((vector[0] + 1.0f) * 0.5f) * widthWindow;
-            float y = ((vector[1] + 1.0f) * 0.5f) * heightWindow;
-            Vec2 pos(x, y);
+        Vec2<TypeNum> get_screen_coords(){
+            TypeNum x = ((vector[0] + 1.0f) * 0.5f) * widthWindow;
+            TypeNum y = ((vector[1] + 1.0f) * 0.5f) * heightWindow;
+            Vec2<TypeNum> pos(x, y);
             return pos;
         }
-        Vec3 operator-(Vec3 &vec2)
+        Vec3<TypeNum> operator-(Vec3<TypeNum> &vec2)
         {
-            float res[3];
+            TypeNum res[3];
             res[0] = res[0] - vec2.get(0);
             res[1] = res[1] - vec2.get(1);
             res[2] = res[2] - vec2.get(2);
-            Vec3 vectorNew(res[0], res[1], res[2]);
+            Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
             return vectorNew; 
         }
-        Vec3 operator+(Vec3 &vec2)
+        Vec3<TypeNum> operator+(Vec3<TypeNum> &vec2)
         {
-            float res[3];
+            TypeNum res[3];
             res[0] = res[0] + vec2.get(0);
             res[1] = res[1] + vec2.get(1);
             res[2] = res[2] + vec2.get(2);
-            Vec3 vectorNew(res[0], res[1], res[2]);
+            Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
             return vectorNew; 
         }
 
 };
 
+template <class TypeNum>
 class Vec4{
     private:
-        float vector[4];
+        TypeNum vector[4];
         int size;
     public:
         Vec4(){
@@ -117,53 +119,53 @@ class Vec4{
             memset(vector, 0, sizeof vector);
 
         }
-        Vec4(float one, float two, float three, float four){
+        Vec4(TypeNum one, TypeNum two, TypeNum three, TypeNum four){
             vector[0] = one;
             vector[1] = two;
             vector[2] = three;
             vector[3] = four;
             size = 4;
         }
-        Vec4(float res[4]){
+        Vec4(TypeNum res[4]){
             vector[0] = res[0];
             vector[1] = res[1];
             vector[2] = res[2];
             vector[3] = res[3];
             size = 4;
         }
-        void set(int i, float number){
+        void set(int i, TypeNum number){
             vector[i] = number;
         }
-        float get(int i){
+        TypeNum get(int i){
             return vector[i];
         }
         int sizeVec(){
             return size;
         }
-        Vec3 get_Vec3(){
-            float res[3];
+        Vec3<TypeNum> get_Vec3(){
+            TypeNum res[3];
             res[0] = vector[0]; 
             res[1] = vector[1];  
             res[2] = vector[2];
         
-            Vec3 vectorNew(res[0], res[1], res[2]);
+            Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
             return vectorNew; 
         }
-        Vec3 get_NDC(){
-            float res[3];
+        Vec3<TypeNum> get_NDC(){
+            TypeNum res[3];
             res[0] = vector[0] / vector[3]; 
             res[1] = vector[1] / vector[3];  
             res[2] = vector[2] / vector[3];
             
-            if (res[2] > 1){
+            /*if (res[2] > 1){
                 res[2] = 1.0f;
             }
             
             if (res[2] < -1){
                 res[2] = -1.0f;
-            }
+            }*/
             res[2] = (res[2] + 1.0f) / 2;
-            Vec3 vectorNew(res[0], res[1], res[2]);
+            Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
             return vectorNew; 
         }
         void show(){
@@ -172,25 +174,25 @@ class Vec4{
                 std::cout << "\n";
             }
         }
-        Vec4 operator-(Vec4 &vec2)
+        Vec4<TypeNum> operator-(Vec4<TypeNum> &vec2)
         {
-            float res[4];
+            TypeNum res[4];
             res[0] = res[0] - vec2.get(0);
             res[1] = res[1] - vec2.get(1);
             res[2] = res[2] - vec2.get(2);
             res[3] = res[3] - vec2.get(3);
-            Vec4 vectorNew(res[0], res[1], res[2], res[3]);
+            Vec4<TypeNum> vectorNew(res[0], res[1], res[2], res[3]);
             return vectorNew; 
         }
-        Vec4 operator+(Vec4 &vec2)
+        Vec4<TypeNum> operator+(Vec4<TypeNum> &vec2)
         {
-            float res[4];
+            TypeNum res[4];
             res[0] = res[0] + vec2.get(0);
             res[1] = res[1] + vec2.get(1);
             res[2] = res[2] + vec2.get(2);
             res[3] = res[3] + vec2.get(3);
 
-            Vec4 vectorNew(res[0], res[1], res[2], res[3]);
+            Vec4<TypeNum> vectorNew(res[0], res[1], res[2], res[3]);
             return vectorNew; 
         }
 };
@@ -234,14 +236,14 @@ class Mat4x4{
                 std::cout << "\n";
             }
         }
-        Vec4 multiplyVec4(Vec4 vector){
+        Vec4<float> multiplyVec4(Vec4<float> vector){
             float res[4] = {0, 0, 0, 0};
             
             res[0] = mat[0][0] * vector.get(0) + mat[0][1] * vector.get(1) + mat[0][2] * vector.get(2) + mat[0][3] * vector.get(3); 
             res[1] = mat[1][0] * vector.get(0) + mat[1][1] * vector.get(1) + mat[1][2] * vector.get(2) + mat[1][3] * vector.get(3);
             res[2] = mat[2][0] * vector.get(0) + mat[2][1] * vector.get(1) + mat[2][2] * vector.get(2) + mat[2][3] * vector.get(3);
             res[3] = mat[3][0] * vector.get(0) + mat[3][1] * vector.get(1) + mat[3][2] * vector.get(2) + mat[3][3] * vector.get(3); 
-            Vec4 vectorOutput(res);
+            Vec4<float> vectorOutput(res);
             return vectorOutput; 
         }
         Mat4x4 operator*(Mat4x4 &mat2)

@@ -13,33 +13,36 @@ const float NearDistance = 0.5;
 float angleOfView = 90; 
 float near = 0.1; 
 float far = 100;
-
-#include "include/CImg.h"
-#include "matrix.cpp"
-
-struct triangleInfo{
-    Vec3 vert1;
-    Vec3 vert2;
-    Vec3 vert3;
-
-    Vec2 ScreenVert1;
-    Vec2 ScreenVert2;
-    Vec2 ScreenVert3;
-};
-#include "render.cpp"
-
 #define PI 3.14159265
 
 float degreeToRadian(float degrees){
     return degrees * (PI / 180);
 }
 
+#include "include/CImg.h"
+#include "matrix.cpp"
+
+struct triangleInfo{
+    Vec3<float> vert1;
+    Vec3<float> vert2;
+    Vec3<float> vert3;
+
+    Vec2<float> ScreenVert1;
+    Vec2<float> ScreenVert2;
+    Vec2<float> ScreenVert3;
+};
+#include "render.cpp"
+
+
+
+
 int main(void) {
     SDL_Event event;
-    SDL_Renderer *renderer;
-    SDL_Window *window;
+    //SDL_Renderer *renderer;
+    //SDL_Window *window;
     //std::vector<std::vector<float>> *z_buffer(widthWindow, *std::vector<float>(heightWindow, std::numeric_limits<float>::infinity()));
-    
+    SDL_Window *window = SDL_CreateWindow("3D Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, widthWindow, heightWindow, SDL_WINDOW_SHOWN);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED); 
 
 
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 )
@@ -53,15 +56,15 @@ int main(void) {
     //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     
     float offsetY = -2.0;
-    Vec3 vAf(-2, -2.5, 5); 
-    Vec3 vBf(-2,  -1.5, 5);
-    Vec3 vCf(-1,  -1.5, 5);
-    Vec3 vDf(-1, -2.5, 5);
+    Vec3<float> vAf(-2, -2.5, 5); 
+    Vec3<float> vBf(-2,  -1.5, 5);
+    Vec3<float> vCf(-1,  -1.5, 5);
+    Vec3<float> vDf(-1, -2.5, 5);
 
-    Vec3 vAb(-2, -2.5, 6);
-    Vec3 vBb(-2,  -1.5, 6);
-    Vec3 vCb(-1,  -1.5, 6);
-    Vec3 vDb(-1, -2.5, 6);
+    Vec3<float> vAb(-2, -2.5, 6);
+    Vec3<float> vBb(-2,  -1.5, 6);
+    Vec3<float> vCb(-1,  -1.5, 6);
+    Vec3<float> vDb(-1, -2.5, 6);
     
 /*    Vec3 Vertex01(-2, -2.5, 3);
     Vec3 Vertex02(-2, -1.5, 4);
@@ -72,43 +75,43 @@ int main(void) {
     Vec4 Vertex02(-2, -1.5, 4, 1);
     Vec4 Vertex03(1, -1.5, 4, 1);*/
 
-    Vec4 Vertex01(0, 0, 0, 1);
-    Vec4 Vertex02(0, 0, 1, 1);
-    Vec4 Vertex03(1, 0, 0, 1);
+    Vec4<float> Vertex01(0, 0, 0, 1);
+    Vec4<float> Vertex02(0, 0, 1, 1);
+    Vec4<float> Vertex03(1, 0, 0, 1);
     
     float zOffset = 0.5;
-    Vec4 Vertex01tri1(1, 0, 1-zOffset, 1);
-    Vec4 Vertex02tri1(0, 0, 1-zOffset, 1);
-    Vec4 Vertex03tri1(1, 0, 0-zOffset, 1);
+    Vec4<float> Vertex01tri1(1-1.2, 0, 1-zOffset, 1);
+    Vec4<float> Vertex02tri1(0, 0, 1-zOffset, 1);
+    Vec4<float> Vertex03tri1(1+0.5, 0, 0-zOffset, 1);
     //unsigned int time = SDL_GetTicks();
 
     // Texture coordinates
-    Vec2 st1(0, 0);
-    Vec2 st2(1, 0);
-    Vec2 st3(0, 1);
+    Vec2<float> st1(0, 0);
+    Vec2<float> st2(1, 0);
+    Vec2<float> st3(0, 1);
     Triangle trig(renderer, Vertex01, Vertex02, Vertex03);
     Triangle trig1(renderer, Vertex01tri1, Vertex02tri1, Vertex03tri1);
 
-    Vec2 topLeftPoint(0, 0);
-    Vec2 topRightPoint(widthWindow, 0);
-    Vec2 bottomLeftPoint(0, heightWindow);
-    Vec2 bottomRightPoint(heightWindow, widthWindow);
+    Vec2<float> topLeftPoint(0, 0);
+    Vec2<float> topRightPoint(widthWindow, 0);
+    Vec2<float> bottomLeftPoint(0, heightWindow);
+    Vec2<float> bottomRightPoint(heightWindow, widthWindow);
         
-    std::vector<std::vector<Vec2>> cilpEdges; 
+    std::vector<std::vector<Vec2<float>>> cilpEdges;
     
-    std::vector<Vec2> topEdge;
+    std::vector<Vec2<float>> topEdge;
     topEdge.push_back(topLeftPoint);
     topEdge.push_back(topRightPoint);
     
-    std::vector<Vec2> bottomEdge;
+    std::vector<Vec2<float>> bottomEdge;
     bottomEdge.push_back(bottomLeftPoint);
     bottomEdge.push_back(bottomRightPoint);
     
-    std::vector<Vec2> rightEdge;
+    std::vector<Vec2<float>> rightEdge;
     rightEdge.push_back(topRightPoint);
     rightEdge.push_back(bottomRightPoint);
     
-    std::vector<Vec2> leftEdge;     
+    std::vector<Vec2<float>> leftEdge;     
     leftEdge.push_back(topLeftPoint);
     leftEdge.push_back(bottomLeftPoint);
     
@@ -121,10 +124,10 @@ int main(void) {
     float yPoStart = 0.0f;
     float zPoStart = -1.0f;
 
-    float xPos = 1.0f;
-    float yPos = 0.0f;
+    float xPos = -2.0f;
+    float yPos = -1.5f;
     float zPos = -1.0f;
-    Vec3 cameraPos(xPos, yPos, zPos);
+    Vec3<float> cameraPos(xPos, yPos, zPos);
 
     //https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78
 
@@ -146,6 +149,16 @@ int main(void) {
         0, scale, 0, 0,
         0, 0, depth_norm, depth_norm2,
         0, 0, 1, 0 
+    );
+
+    float xPosNew = -2.0f;
+    float yPosNew = -0.5f;
+    float zPosNew = -1.0f;
+    Mat4x4 Transformation(
+        1, 0, 0, xPosNew,
+        0, 1, 0, yPosNew,
+        0, 0, 1, zPosNew,
+        0, 0, 0, 1 
     );
    /*  
     float top = scale * near;
@@ -198,21 +211,23 @@ int main(void) {
     //std::vector<Triangle> triangles = loadObj(renderer, "3dmodels/M4.obj");
     //std::cout << "triangles: " << triangles.size() << std::endl;
     unsigned int time = 0;
-
+    Vec3<float> position2(2, 2, 2);
     while (1) {
+    double **z_buffer = new double*[widthWindow];
+    for(int i = 0; i < widthWindow; ++i) {
+        z_buffer[i] = new double[heightWindow];
+    }
+    for (int i = 0; i < widthWindow; ++i){
+        for (int j = 0; j < heightWindow; ++j){
+            z_buffer[i][j] = std::numeric_limits<double>::infinity(); 
+        }
+    }
         unsigned int now = SDL_GetTicks();
         unsigned int delta_time = now - time;
         //bool canMove;
         time = now;
-    float **z_buffer = new float*[widthWindow];
-    for(int i = 0; i < widthWindow; ++i) {
-        z_buffer[i] = new float[heightWindow];
-    }
-    for (int i = 0; i < widthWindow; ++i){
-        for (int j = 0; j < heightWindow; ++j){
-            z_buffer[i][j] = std::numeric_limits<float>::infinity(); 
-        }
-    }
+
+
         /*if (delta_time > 1000){
             canMove = true;
             time = now;
@@ -240,52 +255,7 @@ int main(void) {
         cameraPos.set(1, yPos);
         cameraPos.set(2, zPos);
 
-        if (SDL_PollEvent(&event) != 0){
-            if(event.type == SDL_QUIT )
-            {
-                SDL_DestroyRenderer(renderer);
-                SDL_DestroyWindow(window);
-                SDL_Quit();
-            }
-            if (event.type == SDL_KEYDOWN){
-                std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
 
-                switch(event.key.keysym.sym)
-                {
-                    case SDLK_ESCAPE:
-                        SDL_DestroyRenderer(renderer);
-                        SDL_DestroyWindow(window);
-                        SDL_Quit();                   
-                        break;
-                    case SDLK_w:
-                        zPos -= 0.1;
-                        Camera.set(2, 3, zPos);
-                        break;
-                    case SDLK_s:
-                        zPos += 0.1;
-                        Camera.set(2, 3, zPos);
-                        break;
-                    case SDLK_a:
-                        xPos += 0.1;
-                        Camera.set(0, 3, xPos);
-                        break;
-                    case SDLK_d:
-                        xPos -= 0.1;
-                        Camera.set(0, 3, xPos);
-                        break;
-                    case SDLK_LSHIFT:
-                        yPos += 0.1;
-                        Camera.set(1, 3, yPos);
-                        break;
-                    case SDLK_LCTRL:
-                        yPos -= 0.1;
-                        Camera.set(1, 3, yPos);
-                        break;
-
-                }
-            }
-  
-        }
 
         SDL_RenderClear(renderer);
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -310,22 +280,89 @@ int main(void) {
         DrawLine(renderer, ProjectVertex(vDf), ProjectVertex(vDb));*/
         
         //triangle
+        xPosNew = -2.0f;
+        yPosNew = -0.5f;
+        zPosNew = -1.0f;
+                        
+        Transformation.set(0, 3, xPosNew);
+        Transformation.set(1, 3, yPosNew);
+        Transformation.set(2, 3, zPosNew);
         trig.Clip(cilpEdges);
-        trig.Projection(Projection, Camera, cameraPos);
+        trig.Projection(Projection, Camera, Transformation, cameraPos);
         trig.Zbuffer(z_buffer, cameraPos);        
         trig.Render(z_buffer);
         trig.Unwrap(z_buffer);        
-
+        //trig.transform(position2);
         //trig.WrapTexture(z_buffer);
 
-        
+
+        xPosNew = 2.0f;
+        yPosNew = 0.5f;
+        zPosNew = 1.0f;
+
+        Transformation.set(0, 3, xPosNew);
+        Transformation.set(1, 3, yPosNew);
+        Transformation.set(2, 3, zPosNew);
         SDL_SetRenderDrawColor(renderer, 255, 128, 0, 255);
         trig1.Clip(cilpEdges);
-        trig1.Projection(Projection, Camera, cameraPos);
+        trig1.Projection(Projection, Camera, Transformation, cameraPos);
         trig1.Zbuffer(z_buffer, cameraPos);        
         trig1.Unwrap(z_buffer);
         trig1.Render(z_buffer);
-        
+
+        if (SDL_PollEvent(&event) != 0){
+            if(event.type == SDL_QUIT )
+            {
+                SDL_DestroyRenderer(renderer);
+                SDL_DestroyWindow(window);
+                SDL_Quit();
+            }
+            if (event.type == SDL_KEYDOWN){
+                std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
+                float movement = 0.1;
+                switch(event.key.keysym.sym)
+                {
+                    case SDLK_ESCAPE:
+                        SDL_DestroyRenderer(renderer);
+                        SDL_DestroyWindow(window);
+                        SDL_Quit();                   
+                        break;
+                    case SDLK_w:
+                        zPos += movement;                        
+                        Camera.set(2, 3, -zPos);
+                        break;
+                    case SDLK_s:
+                        zPos -= movement;
+                        Camera.set(2, 3, -zPos);
+                        break;
+                    case SDLK_a:
+                        xPos -= movement;
+                        Camera.set(0, 3, -xPos);
+                        break;
+                    case SDLK_d:
+                        xPos += movement;
+                        Camera.set(0, 3, -xPos);
+                        break;
+                    case SDLK_LSHIFT:
+                        yPos -= movement;
+                        Camera.set(1, 3, -yPos);
+                        break;
+
+                    case SDLK_LCTRL:
+                        yPos += movement;
+                        Camera.set(1, 3, -yPos);
+                        break;
+
+                }
+            }
+  
+        }
+
+        for(int i = 0; i < widthWindow; ++i) {
+            delete[] z_buffer[i];
+        }
+        delete[] z_buffer;
+
         /*for (int i = 0; i < 4; i++){
             triangles[i].Clip(cilpEdges);
             triangles[i].Projection(Projection, Camera, cameraPos);
@@ -343,15 +380,8 @@ int main(void) {
         DrawLine(renderer, ProjectVertex(Vertex01), ProjectVertex(Vertex03));
         DrawLine(renderer, ProjectVertex(Vertex02), ProjectVertex(Vertex03));
         */
-
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        for(int i = 0; i < widthWindow; ++i) {
-            delete[] z_buffer[i];
-        }
-        delete[] z_buffer;
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderPresent(renderer);
-
-
 
 
     }

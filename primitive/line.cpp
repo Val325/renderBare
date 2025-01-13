@@ -1,4 +1,4 @@
-void DrawLineLow(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer, triangleInfo triangl){
+void DrawLineLow(SDL_Renderer *renderer, Vec2<float> start, Vec2<float> end, double **z_buffer, triangleInfo triangl){
     int dx = end.get(0) - start.get(0);
     int dy = end.get(1) - start.get(1);
     int yi = 1;
@@ -17,24 +17,29 @@ void DrawLineLow(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer,
             //z = 1/z;
             //float z = ((1/ (1/start.get(1)))+x*((1/end.get(1))-(1/start.get(1))));
             //float z = (1/((1/start.get(1))+x*((1/end.get(1))-(1/start.get(1)))));        
-            /*float Mz = x/y;     
-            float startZ = start.get(0)/start.get(1);
-            float endZ = end.get(0)/end.get(1);
-            float z = 1/start.get(1) + (Mz-startZ) * ((1/end.get(1)-1/start.get(1))/(endZ-startZ));
-            z = 1/z;*/
+            //float Mz = x/y;     
+            //float startZ = start.get(0)/start.get(1);
+            //float endZ = end.get(0)/end.get(1);
+            //float z = 1/start.get(1) + (Mz-startZ) * ((1/end.get(1)-1/start.get(1))/(endZ-startZ));
+            //z = 1/z;
 
             if (x > 0 && x < 512 && y > 0 && y < 512){
-            Vec2 point(x, y);
-            Vec3 baric = Barycentric(point, triangl.ScreenVert1, triangl.ScreenVert2, triangl.ScreenVert3);
-            baric.show();
-            float z = baric.get(0) * 1/triangl.ScreenVert1.get(1) + baric.get(1) * 1/triangl.ScreenVert2.get(1) + baric.get(2) * 1/triangl.ScreenVert3.get(1);
-                if (z < z_buffer[x][y]){
+            Vec2<double> point(x, y);
+            //triangl.ScreenVert1.show(); 
+            Vec3<double> baric = Barycentric(point, triangl.ScreenVert1, triangl.ScreenVert2, triangl.ScreenVert3);
+            //point.show();
+            
+            float z = baric.get(0) * triangl.ScreenVert1.get(1) + baric.get(1) * triangl.ScreenVert2.get(1) + baric.get(2) * triangl.ScreenVert3.get(1);
+            //float d = 24;
+            //float s = (pow(2, d) - 1);
+            //z = s*(far/(far-near) + (1/z)*(-far*near/far-near));  
+            if (z < z_buffer[x][y]){
+                    //std::cout << "z " << z << std::endl;
 
                     z_buffer[x][y] = z;
                     SDL_RenderDrawPoint(renderer, x, y);
                 }
                 //std::cout << "z_buffer[x][y] " << z_buffer[x][y] << std::endl;
-                //std::cout << "z " << z << std::endl;
                 //std::cout << "z_buffer: " << z_buffer[x][y] << std::endl; 
             }
     
@@ -48,7 +53,7 @@ void DrawLineLow(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer,
     }
 }
 
-void DrawLineLow_texture(SDL_Renderer *renderer, Vec2 start, Vec2 end, float r, float g, float b){
+void DrawLineLow_texture(SDL_Renderer *renderer, Vec2<float> start, Vec2<float> end, float r, float g, float b){
     int dx = end.get(0) - start.get(0);
     int dy = end.get(1) - start.get(1);
     int yi = 1;
@@ -74,7 +79,7 @@ void DrawLineLow_texture(SDL_Renderer *renderer, Vec2 start, Vec2 end, float r, 
     }
 }
 
-void DrawLineHigh(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer,  triangleInfo triangl){
+void DrawLineHigh(SDL_Renderer *renderer, Vec2<float> start, Vec2<float> end, double **z_buffer,  triangleInfo triangl){
     int dx = end.get(0) - start.get(0);
     int dy = end.get(1) - start.get(1);
     int xi = 1;
@@ -90,7 +95,7 @@ void DrawLineHigh(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer
 
     for (int y = (int)start.get(1); y < (int)end.get(1); y++){
         //float z = ((1/ (1/triangl.vert1.get(2)))+x*((1/triangl.vert2.get(2))-(triangl.vert1.get(2))));
-        float z = (1/((1/start.get(1))+x*((1/end.get(1))-(1/start.get(1)))));        
+        //float z = (1/((1/start.get(1))+x*((1/end.get(1))-(1/start.get(1)))));        
         //Vec2 point(x, y);
         //Vec3 baric = Barycentric(point, triangl.ScreenVert1, triangl.ScreenVert2, triangl.ScreenVert3);
         //float z = baric.get(0) * 1/triangl.ScreenVert1.get(1) + baric.get(1) * 1/triangl.ScreenVert2.get(1) + baric.get(2) * 1/triangl.ScreenVert3.get(1);
@@ -101,9 +106,14 @@ void DrawLineHigh(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer
             //float z = 1/start.get(1) + (Mz-startZ) * ((1/end.get(1)-1/start.get(1))/(endZ-startZ));
     
         if (x > 0 && x < 512 && y > 0 && y < 512){
-            Vec2 point(x, y);
-            Vec3 baric = Barycentric(point, triangl.ScreenVert1, triangl.ScreenVert2, triangl.ScreenVert3);
-            float z = baric.get(0) * 1/triangl.ScreenVert1.get(1) + baric.get(1) * 1/triangl.ScreenVert2.get(1) + baric.get(2) * 1/triangl.ScreenVert3.get(1);
+
+            Vec2<double> point(x, y);
+            Vec3<double> baric = Barycentric(point, triangl.ScreenVert1, triangl.ScreenVert2, triangl.ScreenVert3);
+            float z = baric.get(0) * triangl.vert1.get(2) + baric.get(1) * triangl.vert2.get(2) + baric.get(2) * triangl.vert3.get(2);
+            //float z = baric.get(0) * 1/triangl.ScreenVert1.get(1) + baric.get(1) * 1/triangl.ScreenVert2.get(1) + baric.get(2) * 1/triangl.ScreenVert3.get(1);
+            //float d = 24;
+            //float s = (pow(2, d) - 1);
+            //z = s*(far/(far-near) + (1/z)*(-far*near/far-near));  
             //std::cout << "z distance: " << z << std::endl; 
             if (z < z_buffer[x][y]){
 
@@ -121,7 +131,7 @@ void DrawLineHigh(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer
     } 
 }
 
-void DrawLineHigh_texture(SDL_Renderer *renderer, Vec2 start, Vec2 end, float r, float g, float b){
+void DrawLineHigh_texture(SDL_Renderer *renderer, Vec2<float> start, Vec2<float> end, float r, float g, float b){
     int dx = end.get(0) - start.get(0);
     int dy = end.get(1) - start.get(1);
     int xi = 1;
@@ -145,7 +155,7 @@ void DrawLineHigh_texture(SDL_Renderer *renderer, Vec2 start, Vec2 end, float r,
     } 
 }
 
-void DrawLine(SDL_Renderer *renderer, Vec2 start, Vec2 end, float **z_buffer,  triangleInfo triangl){
+void DrawLine(SDL_Renderer *renderer, Vec2<float> start, Vec2<float> end, double **z_buffer,  triangleInfo triangl){
 
     if (abs(end.get(1) - start.get(1)) < abs(end.get(0) - start.get(0))){
         if (start.get(0) > end.get(0)){
