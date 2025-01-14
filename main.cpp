@@ -27,6 +27,14 @@ struct triangleInfo{
     Vec3<float> vert2;
     Vec3<float> vert3;
 
+    Vec3<float> normal;
+
+    Vec2<float> st1;
+    Vec2<float> st2;
+    Vec2<float> st3;
+    cimg_library::CImg<unsigned char> texture;
+    bool isUseTexture;
+    
     Vec2<float> ScreenVert1;
     Vec2<float> ScreenVert2;
     Vec2<float> ScreenVert3;
@@ -79,10 +87,13 @@ int main(void) {
     Vec4<float> Vertex02(0, 0, 1, 1);
     Vec4<float> Vertex03(1, 0, 0, 1);
     
-    float zOffset = 0.5;
-    Vec4<float> Vertex01tri1(1-1.2, 0, 1-zOffset, 1);
-    Vec4<float> Vertex02tri1(0, 0, 1-zOffset, 1);
-    Vec4<float> Vertex03tri1(1+0.5, 0, 0-zOffset, 1);
+    Vec4<float> Vertex01tri1(0, 0, 0, 1);
+    Vec4<float> Vertex02tri1(0, 0, 1, 1);
+    Vec4<float> Vertex03tri1(1, 0, 0, 1);
+
+    Vec4<float> Vertex01tri2(0, 0, 0, 1);
+    Vec4<float> Vertex02tri2(0, 0, 1, 1);
+    Vec4<float> Vertex03tri2(1, 0, 0, 1);
     //unsigned int time = SDL_GetTicks();
 
     // Texture coordinates
@@ -91,6 +102,7 @@ int main(void) {
     Vec2<float> st3(0, 1);
     Triangle trig(renderer, Vertex01, Vertex02, Vertex03);
     Triangle trig1(renderer, Vertex01tri1, Vertex02tri1, Vertex03tri1);
+    Triangle trig2(renderer, Vertex01tri2, Vertex02tri2, Vertex03tri2);
 
     Vec2<float> topLeftPoint(0, 0);
     Vec2<float> topRightPoint(widthWindow, 0);
@@ -258,7 +270,8 @@ int main(void) {
 
 
         SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        
         //trig.Unwrap();        
 
         // The front face
@@ -280,25 +293,25 @@ int main(void) {
         DrawLine(renderer, ProjectVertex(vDf), ProjectVertex(vDb));*/
         
         //triangle
-        xPosNew = -2.0f;
-        yPosNew = -0.5f;
+        xPosNew = 1.0f;
+        yPosNew = 0.0f;
         zPosNew = -1.0f;
-                        
+
         Transformation.set(0, 3, xPosNew);
         Transformation.set(1, 3, yPosNew);
         Transformation.set(2, 3, zPosNew);
         trig.Clip(cilpEdges);
         trig.Projection(Projection, Camera, Transformation, cameraPos);
         trig.Zbuffer(z_buffer, cameraPos);        
-        trig.Render(z_buffer);
-        trig.Unwrap(z_buffer);        
+        //trig.Render(z_buffer,cameraPos);
+        trig.Unwrap(z_buffer,cameraPos);        
         //trig.transform(position2);
-        //trig.WrapTexture(z_buffer);
+       // trig.WrapTexture(z_buffer);
 
 
-        xPosNew = 2.0f;
-        yPosNew = 0.5f;
-        zPosNew = 1.0f;
+        /*xPosNew = 2.0f;
+        yPosNew = 0.6f;
+        zPosNew = 1.5f;
 
         Transformation.set(0, 3, xPosNew);
         Transformation.set(1, 3, yPosNew);
@@ -307,8 +320,21 @@ int main(void) {
         trig1.Clip(cilpEdges);
         trig1.Projection(Projection, Camera, Transformation, cameraPos);
         trig1.Zbuffer(z_buffer, cameraPos);        
-        trig1.Unwrap(z_buffer);
-        trig1.Render(z_buffer);
+        trig1.Unwrap(z_buffer,cameraPos);
+
+        xPosNew = 2.0f;
+        yPosNew = 0.7f;
+        zPosNew = 1.5f;
+
+        Transformation.set(0, 3, xPosNew);
+        Transformation.set(1, 3, yPosNew);
+        Transformation.set(2, 3, zPosNew);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        trig2.Clip(cilpEdges);
+        trig2.Projection(Projection, Camera, Transformation, cameraPos);
+        trig2.Zbuffer(z_buffer, cameraPos);        
+        trig2.Unwrap(z_buffer,cameraPos);*/
+        //trig1.Render(z_buffer,cameraPos);
 
         if (SDL_PollEvent(&event) != 0){
             if(event.type == SDL_QUIT )

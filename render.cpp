@@ -9,6 +9,20 @@ double Dot(Vec2<double> v1, Vec2<double> v2) {
     return result;
 }
 
+float Dot(Vec3<float> v1, Vec3<float> v2) {
+    float result = 0;
+    for (int i = 0; i < v1.sizeVec(); ++i) {
+        result += v1.get(i) * v2.get(i);
+    }
+    return result;
+}
+float Dot(Vec2<float> v1, Vec2<float> v2) {
+    float result = 0;
+    for (int i = 0; i < v1.sizeVec(); ++i) {
+        result += v1.get(i) * v2.get(i);
+    }
+    return result;
+}
 Vec3<double> Barycentric(Vec2<double> p, Vec2<float> a, Vec2<float> b, Vec2<float> c)
 {
     Vec2<double> aDouble(a.get(0), a.get(1)); 
@@ -35,6 +49,31 @@ Vec3<double> Barycentric(Vec2<double> p, Vec2<float> a, Vec2<float> b, Vec2<floa
     return vectorNew; 
 }
 
+Vec3<float> Barycentric(Vec2<float> p, Vec2<float> a, Vec2<float> b, Vec2<float> c)
+{
+    Vec2<float> aDouble(a.get(0), a.get(1)); 
+    Vec2<float> bDouble(b.get(0), b.get(1)); 
+    Vec2<float> cDouble(c.get(0), c.get(1)); 
+
+    Vec2<float> v0 = bDouble - aDouble, v1 = cDouble - aDouble, v2 = p - aDouble;
+    float d00 = Dot(v0, v0);
+    float d01 = Dot(v0, v1);
+    float d11 = Dot(v1, v1);
+    float d20 = Dot(v2, v0);
+    float d21 = Dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+
+    float res[3];
+    // v = (d11 * d20 - d01 * d21) / denom
+    res[0] = (d11 * d20 - d01 * d21) / denom;
+    // w = (d00 * d21 - d01 * d20) / denom;
+    res[1] = (d00 * d21 - d01 * d20) / denom;
+    //u = 1.0f - v - w; 
+    res[2] = 1.0f - res[0] - res[1];
+    
+    Vec3<float> vectorNew(res[0], res[1], res[2]);
+    return vectorNew; 
+}
 /*inline float dotProduct(Vec3 vecA, Vec3 vecB)
 {
     return vecA.get(0) * vecB.get(0) + vecA.get(1) * vecB.get(1) + vecA.get(2) * vecB.get(2);
@@ -238,6 +277,20 @@ bool isTriangleDrawn(Vec2<float> ScreenVertex01,Vec2<float> ScreenVertex02,Vec2<
     return  firstVertex && secondVertex && thirdVertex; 
 }
 
+Vec3<float> CrossProduct(Vec3<float> b, Vec3<float> c){
+    //std::cout << "b: " << std::endl;
+    //b.show();
+    //std::cout << "c: " << std::endl;
+    //c.show();
+
+    float x = b.get(1)*c.get(2) - b.get(2)*c.get(1); 
+    float y = b.get(2)*c.get(0) - b.get(0)*c.get(2);
+    float z = b.get(0)*c.get(1) - b.get(1)*c.get(0);
+    
+    Vec3<float> crossVector(x, y, z);
+    return crossVector; 
+}
+
 class Triangle{
     private:
         SDL_Renderer *renderer;
@@ -257,7 +310,9 @@ class Triangle{
         Vec3<float> Coord01;
         Vec3<float> Coord02;
         Vec3<float> Coord03;
-        
+
+        Vec3<float> NormalTriangle;
+
         //texture coordinate
         Vec2<float> st2;
         Vec2<float> st1;
@@ -266,7 +321,7 @@ class Triangle{
         Vec2<float> ScreenVertex01;
         Vec2<float> ScreenVertex02;
         Vec2<float> ScreenVertex03;
-        cimg_library::CImg<unsigned char> texture;
+        
         triangleInfo trig_struct;
         Mat4x4 PV;
     public:
@@ -281,7 +336,13 @@ class Triangle{
                     (Vert1.get(1) + Vert2.get(1) + Vert3.get(1))/3, 
                     (Vert1.get(2) + Vert2.get(2) + Vert3.get(2))/3);
             MidPoint = centerTiangle; 
+            
+ 
 
+
+            //std::cout << "NormalTriangle: " << std::endl;
+            //NormalTriangle.show();
+            Vec3<float> statPoint(0, 0, 0);
             //zDistance =
             Vec3<float> c2(1, 0, 0);
             Coord03 = c2;
@@ -291,10 +352,18 @@ class Triangle{
 
             Vec3<float> c0(0, 0, 1);
             Coord01 = c0;
+            
+            Vec2<float> tex1(0, 0);
+            st2 = tex1;
+            Vec2<float> tex2(1, 0);
+            st1 = tex2; 
+            Vec2<float> tex3(0, 1);
+            st0 = tex3;
 
-            st2 = Vec2<float>(0, 0);
-            st1 = Vec2<float>(1, 0);
-            st0 = Vec2<float>(0, 1);
+            cimg_library::CImg<unsigned char> src("src/tex4.jpg"); 
+            //texture = src;
+            trig_struct.texture = src; 
+            trig_struct.isUseTexture = false;
 
         }
         Triangle(SDL_Renderer *rend, Vec3<float> Vert1, Vec3<float> Vert2, Vec3<float> Vert3){
@@ -315,8 +384,8 @@ class Triangle{
             st2 = Vec2<float>(0, 0);
             st1 = Vec2<float>(1, 0);
             st0 = Vec2<float>(0, 1);
-            cimg_library::CImg<unsigned char> src("src/chess.png"); 
-            texture = src;
+            //cimg_library::CImg<unsigned char> src("src/chess.png"); 
+            //texture = src;
             //std::cout << "height: " << texture.height() << std::endl; 
         }
         Triangle(SDL_Renderer *rend, Vec2<float> Vert1, Vec2<float> Vert2, Vec2<float> Vert3){
@@ -337,8 +406,7 @@ class Triangle{
             st2 = Vec2<float>(0, 0);
             st1 = Vec2<float>(1, 0);
             st0 = Vec2<float>(0, 1);
-            cimg_library::CImg<unsigned char> src("src/chess.png"); 
-            texture = src;
+
             //std::cout << "height: " << texture.height() << std::endl; 
         }
         void Projection(Mat4x4 projetion, Mat4x4 camera, Mat4x4 transform, Vec3<float> startPos){
@@ -351,9 +419,11 @@ class Triangle{
             ScreenVertex01 = pos1_NDC.get_screen_coords();
             
             Vec3<float> pos1 = Vertex01Homogen.get_Vec3();
+
             //std::cout << "pos1: " << std::endl;            
             //pos1.show();
             Vec3<float> pos2 = Vertex02Homogen.get_Vec3();
+
             //std::cout << "pos2: " << std::endl;            
             //pos2.show();
             Vec3<float> pos3 = Vertex03Homogen.get_Vec3();
@@ -376,7 +446,7 @@ class Triangle{
             }else{
                 isRender = false;        
             }*/
-
+            
             const int overflow = 10000;
             bool vert1render = true;
             bool vert2render = true;
@@ -394,7 +464,11 @@ class Triangle{
                 ScreenVertex01.set(1, -overflow);
             }
 
-
+            if (startPos.get(2) > 2.0){
+                isRender = false;        
+            }else{
+                isRender = true;        
+            }
             /*if (!(ScreenVertex01.get(0) < 512
                 && ScreenVertex01.get(0) > 0
                 && ScreenVertex01.get(1) < 512
@@ -460,6 +534,17 @@ class Triangle{
             //isRender = vert1render || vert2render || vert3render; 
             //ScreenVertex03.show();
 
+
+
+            Vec3 Vec1_3 = Vertex01Homogen.get_Vec3();
+            Vec3 Vec2_3 = Vertex02Homogen.get_Vec3();
+            Vec3 Vec3_3 = Vertex03Homogen.get_Vec3();
+            Vec3 Vec1 = Vec2_3 - Vec1_3;
+            Vec3 Vec2 = Vec3_3 - Vec1_3;
+            NormalTriangle = CrossProduct(Vec1, Vec2);
+
+            float similarity = Dot(NormalTriangle, startPos+Vec3_3);
+            //std::cout << "Dot: " << similarity << std::endl;
         }
         void rotation(float alpha, float beta, float gamma){
             Mat4x4 Rotation(
@@ -505,21 +590,54 @@ class Triangle{
                 }
             }*/
         }
-        void Unwrap(double **z_buffer){
+        void Unwrap(double **z_buffer, Vec3<float> startPos){
             
             trig_struct.vert1 = Vertex01; 
             trig_struct.vert2 = Vertex02;
             trig_struct.vert3 = Vertex03;
+            
+            trig_struct.st1 = st0; 
+            trig_struct.st2 = st1;
+            st1.show();
+            trig_struct.st3 = st2;
+
             trig_struct.ScreenVert1 = ScreenVertex01; 
             trig_struct.ScreenVert2 = ScreenVertex02;
             trig_struct.ScreenVert3 = ScreenVertex03;
-
-            DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, z_buffer, trig_struct);
+            trig_struct.normal = NormalTriangle;
+            trig_struct.isUseTexture = true;
+            if (isRender){
+                DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, z_buffer, trig_struct);
+            }
         }
         void WrapTexture(double **z_buffer){
-            //DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03);
+            //cimg_library::CImg<unsigned char> src("src/chess.png"); 
+            //texture = src;
 
-            //
+           /* int sizeXimage = 512;
+            int sizeYimage = 512;
+            trig_struct.isUseTexture = true;
+            
+            for (int x = 0;x < 512; x++){
+                for (int y = 0;y < 512; y++){
+                    if (isInside(trig_struct.ScreenVert1.get(0), trig_struct.ScreenVert1.get(1), 
+                                    trig_struct.ScreenVert2.get(0), trig_struct.ScreenVert2.get(1), 
+                                    trig_struct.ScreenVert3.get(0), trig_struct.ScreenVert3.get(1), 
+                                    x, y)){
+                            Vec2<float> point(x, y); 
+                            Vec3<float> baricentric = Barycentric(point, trig_struct.ScreenVert1, trig_struct.ScreenVert2, trig_struct.ScreenVert3);
+                            float u = baricentric.get(0)*st0.get(0)+baricentric.get(1)*st1.get(0)+baricentric.get(2)*st2.get(0); 
+                            float v = baricentric.get(0)*st0.get(1)+baricentric.get(1)*st1.get(1)+baricentric.get(2)*st2.get(1);
+                            std::cout << "u: " << u*sizeXimage << " v: " << v*sizeYimage << std::endl;
+                            trig_struct.u = u*sizeXimage;
+                            trig_struct.v = v*sizeXimage;
+
+                            if (isRender){
+                                DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, z_buffer, trig_struct);
+                            }
+                    }
+                }
+            }*/
         }
         void Show(){
             std::cout << "triangle: " << std::endl;
@@ -529,7 +647,7 @@ class Triangle{
             std::cout << "----------------" << std::endl;
 
         }
-        void Render(double **z_buffer){
+        void Render(double **z_buffer, Vec3<float> startPos){
             /*struct triangleInfo{
                 Vec3 vert1;
                 Vec3 vert2;
@@ -541,6 +659,8 @@ class Triangle{
             trig_struct.ScreenVert1 = ScreenVertex01; 
             trig_struct.ScreenVert2 = ScreenVertex02;
             trig_struct.ScreenVert3 = ScreenVertex03;
+            trig_struct.normal = NormalTriangle;
+
 
             if (isRender){
                 DrawLine(renderer, ScreenVertex01, ScreenVertex02, z_buffer,  trig_struct);

@@ -34,16 +34,16 @@ class Vec2{
         Vec2<TypeNum> operator-(Vec2<TypeNum> &vec2)
         {
             TypeNum res[2];
-            res[0] = res[0] - vec2.get(0);
-            res[1] = res[1] - vec2.get(1);
+            res[0] = vector[0] - vec2.get(0);
+            res[1] = vector[1] - vec2.get(1);
             Vec2 vectorNew(res[0], res[1]);
             return vectorNew; 
         }
         Vec2<TypeNum> operator+(Vec2<TypeNum> &vec2)
         {
             TypeNum res[2];
-            res[0] = res[0] + vec2.get(0);
-            res[1] = res[1] + vec2.get(1);
+            res[0] = vector[0] + vec2.get(0);
+            res[1] = vector[1] + vec2.get(1);
             Vec2 vectorNew(res[0], res[1]);
             return vectorNew; 
         }
@@ -90,18 +90,18 @@ class Vec3{
         Vec3<TypeNum> operator-(Vec3<TypeNum> &vec2)
         {
             TypeNum res[3];
-            res[0] = res[0] - vec2.get(0);
-            res[1] = res[1] - vec2.get(1);
-            res[2] = res[2] - vec2.get(2);
+            res[0] = vector[0] - vec2.get(0);
+            res[1] = vector[1] - vec2.get(1);
+            res[2] = vector[2] - vec2.get(2);
             Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
             return vectorNew; 
         }
         Vec3<TypeNum> operator+(Vec3<TypeNum> &vec2)
         {
             TypeNum res[3];
-            res[0] = res[0] + vec2.get(0);
-            res[1] = res[1] + vec2.get(1);
-            res[2] = res[2] + vec2.get(2);
+            res[0] = vector[0] + vec2.get(0);
+            res[1] = vector[1] + vec2.get(1);
+            res[2] = vector[2] + vec2.get(2);
             Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
             return vectorNew; 
         }
