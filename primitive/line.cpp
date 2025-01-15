@@ -54,7 +54,9 @@ void DrawLineLow(SDL_Renderer *renderer, Vec2<float> start, Vec2<float> end, dou
 
                     z_buffer[x][y] = z;
                     //if ((int)u*x > 0 && (int)v*y > 0){
+                    if ((int)abs(u*widthTex) < widthTex && (int)abs(v*heighTex) < heighTex){
                         SDL_SetRenderDrawColor(renderer, (int)triangl.texture((int)abs(u*widthTex),(int)abs(v*heighTex),0,0),  (int)triangl.texture((int)abs(u*widthTex),(int)abs(v*heighTex),0,1),  (int)triangl.texture((int)abs(u*widthTex),(int)abs(v*heighTex),0,2), 255);
+                    }
                     //}
                     SDL_RenderDrawPoint(renderer, x,y);
                 }

@@ -172,6 +172,16 @@ int main(void) {
         0, 0, 1, zPosNew,
         0, 0, 0, 1 
     );
+    float a = 60.0f;
+    float b = 60.0f;
+    float g = 60.0f;
+
+    Mat4x4 Rotation(
+        cos(degreeToRadian(a))*cos(degreeToRadian(b)), cos(degreeToRadian(a))*sin(degreeToRadian(b))*sin(degreeToRadian(g))-sin(degreeToRadian(a))*cos(degreeToRadian(g)), cos(degreeToRadian(a))*sin(degreeToRadian(b))*cos(degreeToRadian(g))+sin(degreeToRadian(a))*sin(degreeToRadian(g)), 0,
+        sin(degreeToRadian(a))*cos(degreeToRadian(b)), sin(degreeToRadian(a))*sin(degreeToRadian(b))*sin(degreeToRadian(g))+cos(degreeToRadian(a))*cos(degreeToRadian(g)), sin(degreeToRadian(a))*sin(degreeToRadian(b))*cos(degreeToRadian(g))-cos(degreeToRadian(a))*sin(degreeToRadian(g)), 0,
+        -sin(degreeToRadian(b)), cos(degreeToRadian(b))*sin(degreeToRadian(g)), cos(degreeToRadian(b))*cos(degreeToRadian(g)), 0,
+        0, 0, 0, 1 
+    );
    /*  
     float top = scale * near;
     float bottom = -top;
@@ -301,8 +311,9 @@ int main(void) {
         Transformation.set(1, 3, yPosNew);
         Transformation.set(2, 3, zPosNew);
         trig.Clip(cilpEdges);
-        trig.Projection(Projection, Camera, Transformation, cameraPos);
-        trig.Zbuffer(z_buffer, cameraPos);        
+        trig.Projection(Projection, Camera, Transformation, Rotation, cameraPos);
+        trig.Zbuffer(z_buffer, cameraPos);
+        //trig.rotation(60.0, 30.0, 10.0);
         //trig.Render(z_buffer,cameraPos);
         trig.Unwrap(z_buffer,cameraPos);        
         //trig.transform(position2);

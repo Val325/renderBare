@@ -360,7 +360,7 @@ class Triangle{
             Vec2<float> tex3(0, 1);
             st0 = tex3;
 
-            cimg_library::CImg<unsigned char> src("src/tex4.jpg"); 
+            cimg_library::CImg<unsigned char> src("src/tex5.jpg"); 
             //texture = src;
             trig_struct.texture = src; 
             trig_struct.isUseTexture = false;
@@ -409,11 +409,13 @@ class Triangle{
 
             //std::cout << "height: " << texture.height() << std::endl; 
         }
-        void Projection(Mat4x4 projetion, Mat4x4 camera, Mat4x4 transform, Vec3<float> startPos){
+        void Projection(Mat4x4 projetion, Mat4x4 camera, Mat4x4 transform, Mat4x4 rotate, Vec3<float> startPos){
             //ScreenVertex01 = ProjectVertex(Vertex01);
             //ScreenVertex02 = ProjectVertex(Vertex02);
             //ScreenVertex03 = ProjectVertex(Vertex03);
-            PV = projetion * camera * transform;
+            //
+
+            PV = projetion * camera * transform * rotate;
             Vec4<float> proj_pos1 = PV.multiplyVec4(Vertex01Homogen);
             Vec3<float> pos1_NDC = proj_pos1.get_NDC();
             ScreenVertex01 = pos1_NDC.get_screen_coords();
@@ -464,11 +466,7 @@ class Triangle{
                 ScreenVertex01.set(1, -overflow);
             }
 
-            if (startPos.get(2) > 2.0){
-                isRender = false;        
-            }else{
-                isRender = true;        
-            }
+
             /*if (!(ScreenVertex01.get(0) < 512
                 && ScreenVertex01.get(0) > 0
                 && ScreenVertex01.get(1) < 512
@@ -533,9 +531,16 @@ class Triangle{
             }*/
             //isRender = vert1render || vert2render || vert3render; 
             //ScreenVertex03.show();
-
-
-
+           /* std::cout << "pos1.get(2)" << pos1.get(2) << std::endl;            
+            std::cout << "pos2.get(2)" << pos2.get(2) << std::endl;
+            std::cout << "pos3.get(2)" << pos3.get(2) << std::endl;
+            */
+            /*if (startPos.get(2) > -pos2.get(2)){
+                isRender = false;        
+            }else{
+                isRender = true;        
+            }*/
+    
             Vec3 Vec1_3 = Vertex01Homogen.get_Vec3();
             Vec3 Vec2_3 = Vertex02Homogen.get_Vec3();
             Vec3 Vec3_3 = Vertex03Homogen.get_Vec3();
@@ -543,16 +548,21 @@ class Triangle{
             Vec3 Vec2 = Vec3_3 - Vec1_3;
             NormalTriangle = CrossProduct(Vec1, Vec2);
 
-            float similarity = Dot(NormalTriangle, startPos+Vec3_3);
+            float similarity = Dot(NormalTriangle, startPos);
+            Vec3<float> zLine(0,0,1);
+            float similaritZ = Dot(MidPoint+zLine, startPos);
+            std::cout << "Dot Z line: " << similaritZ << std::endl;
+
             //std::cout << "Dot: " << similarity << std::endl;
+            if (similarity > 0 || similaritZ > 0){
+                isRender = false;        
+            }else{
+                isRender = true;        
+            }
         }
-        void rotation(float alpha, float beta, float gamma){
-            Mat4x4 Rotation(
-                0, 0, 0, 0,
-                0, 0, 0, 0,
-                0, 0, 0, 0,
-                0, 0, 0, 0 
-            );
+        void rotation(float a, float b, float g){
+
+            //PV = PV * Rotation; 
         }
         void transform(Vec3<float> Newposition){
             Mat4x4 Transformation(
@@ -598,7 +608,6 @@ class Triangle{
             
             trig_struct.st1 = st0; 
             trig_struct.st2 = st1;
-            st1.show();
             trig_struct.st3 = st2;
 
             trig_struct.ScreenVert1 = ScreenVertex01; 
