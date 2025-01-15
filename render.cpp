@@ -120,14 +120,7 @@ Vec3 calculateBarycentricCoords(Vec2 vec0, Vec2 vec1, Vec2 vec2, Vec2 pixel){
 #include "primitive/line.cpp"
 #include "primitive/triangle.cpp"
 #include "utils/intersection.cpp"
-/*class Triangle{
-    public:
-        Triangle(SDL_Renderer *rend, Vec3 Vert1, Vec3 Vert2, Vec3 Vert3);
-        void Projection();
-        void Clip(std::vector<std::vector<Vec2>> cilp);
-        void Unwrap();
-        void Render();
-};*/
+
 void SutherlandHodgman(SDL_Renderer *renderer,Vec2<float> point1, Vec2<float> point2, Vec2<float> point3, std::vector<std::vector<Vec2<float>>> cilpEdge);
 std::vector<Vec4<float>> loadObj(std::string path);
 
@@ -151,10 +144,6 @@ Vec2<float> ProjectVertex(Vec3<float> v){
 inline float edgeFunction(Vec3<float> a, Vec3<float> b, Vec3<float> c) {
     return (c.get(0) - a.get(0)) * (b.get(1) - a.get(1)) - (c.get(1) - a.get(1)) * (b.get(0) - a.get(0));
 }
-
-
-
-
 
 //find min vector
 // posTriangle is position
@@ -295,6 +284,8 @@ class Triangle{
     private:
         SDL_Renderer *renderer;
         bool isRender;
+        bool isUseTexture;
+        bool UseZbuffer;
         float zDistance;
         Vec3<float> MidPoint;
 
@@ -307,9 +298,7 @@ class Triangle{
         Vec3<float> Vertex01;
         Vec3<float> Vertex02;
         Vec3<float> Vertex03;
-        Vec3<float> Coord01;
-        Vec3<float> Coord02;
-        Vec3<float> Coord03;
+
 
         Vec3<float> NormalTriangle;
 
@@ -324,6 +313,10 @@ class Triangle{
         
         triangleInfo trig_struct;
         Mat4x4 PV;
+        Mat4x4 Camera_m;
+        Mat4x4 Rotation_m;
+        Mat4x4 Projection_m;
+        Mat4x4 Transformation_m;
     public:
         Triangle(SDL_Renderer *rend, Vec4<float> Vert1, Vec4<float> Vert2, Vec4<float> Vert3){
             renderer = rend;
@@ -336,35 +329,14 @@ class Triangle{
                     (Vert1.get(1) + Vert2.get(1) + Vert3.get(1))/3, 
                     (Vert1.get(2) + Vert2.get(2) + Vert3.get(2))/3);
             MidPoint = centerTiangle; 
-            
- 
-
-
-            //std::cout << "NormalTriangle: " << std::endl;
-            //NormalTriangle.show();
             Vec3<float> statPoint(0, 0, 0);
-            //zDistance =
-            Vec3<float> c2(1, 0, 0);
-            Coord03 = c2;
-            
-            Vec3<float> c1(0, 1, 0);
-            Coord02 = c1;
 
-            Vec3<float> c0(0, 0, 1);
-            Coord01 = c0;
-            
             Vec2<float> tex1(0, 0);
             st2 = tex1;
             Vec2<float> tex2(1, 0);
             st1 = tex2; 
             Vec2<float> tex3(0, 1);
             st0 = tex3;
-
-            cimg_library::CImg<unsigned char> src("src/tex5.jpg"); 
-            //texture = src;
-            trig_struct.texture = src; 
-            trig_struct.isUseTexture = false;
-
         }
         Triangle(SDL_Renderer *rend, Vec3<float> Vert1, Vec3<float> Vert2, Vec3<float> Vert3){
             renderer = rend;
@@ -372,21 +344,9 @@ class Triangle{
             Vertex02 = Vert2;
             Vertex03 = Vert3;
 
-            Vec3<float> c2(1, 0, 0);
-            Coord03 = c2;
-            
-            Vec3<float> c1(0, 1, 0);
-            Coord02 = c1;
-
-            Vec3<float> c0(0, 0, 1);
-            Coord01 = c0;
-
             st2 = Vec2<float>(0, 0);
             st1 = Vec2<float>(1, 0);
             st0 = Vec2<float>(0, 1);
-            //cimg_library::CImg<unsigned char> src("src/chess.png"); 
-            //texture = src;
-            //std::cout << "height: " << texture.height() << std::endl; 
         }
         Triangle(SDL_Renderer *rend, Vec2<float> Vert1, Vec2<float> Vert2, Vec2<float> Vert3){
             renderer = rend;
@@ -394,26 +354,155 @@ class Triangle{
             ScreenVertex02 = Vert2;
             ScreenVertex03 = Vert3;
 
-            Vec3<float> c2(1, 0, 0);
-            Coord03 = c2;
-            
-            Vec3<float> c1(0, 1, 0);
-            Coord02 = c1;
-
-            Vec3<float> c0(0, 0, 1);
-            Coord01 = c0;
-
             st2 = Vec2<float>(0, 0);
             st1 = Vec2<float>(1, 0);
             st0 = Vec2<float>(0, 1);
 
-            //std::cout << "height: " << texture.height() << std::endl; 
         }
+        void Projection(){
+            float aspect_ratio = widthWindow / heightWindow;
+            float scale = 1 / tan(angleOfView * 0.5 * PI / 180);
+            float aspect_scale = 1 / (tan(angleOfView * 0.5 * PI / 180) * aspect_ratio);
+            float depth_norm = -(far+near) / (far-near);
+            float depth_norm2 = -2*far*near / (far-near);
+
+            //https://medium.com/@jrespinozah/3d-graphics-the-perspective-projection-d2076f42cdf3
+            Mat4x4 ProjectionMat(
+                aspect_scale, 0, 0, 0,
+                0, scale, 0, 0,
+                0, 0, depth_norm, depth_norm2,
+                0, 0, 1, 0 
+            );
+            Projection_m = ProjectionMat; 
+        }
+        void View(Vec3<float> cameraPos){
+            //https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78
+            Mat4x4 CameraMat(
+                0.0f, 0.0f, 1.0f, -cameraPos.get(0),
+                0.0f, -1.0f, 0.0f, -cameraPos.get(1),
+                1.0f, 0.0f, 0.0f, -cameraPos.get(2),
+                0.0f, 0.0f, 0.0f, 1.0f 
+            );
+            Camera_m = CameraMat; 
+        }
+        void Rotatition(float a, float b, float g){
+            Mat4x4 RotationMat(
+                cos(degreeToRadian(a))*cos(degreeToRadian(b)), cos(degreeToRadian(a))*sin(degreeToRadian(b))*sin(degreeToRadian(g))-sin(degreeToRadian(a))*cos(degreeToRadian(g)), cos(degreeToRadian(a))*sin(degreeToRadian(b))*cos(degreeToRadian(g))+sin(degreeToRadian(a))*sin(degreeToRadian(g)), 0,
+                sin(degreeToRadian(a))*cos(degreeToRadian(b)), sin(degreeToRadian(a))*sin(degreeToRadian(b))*sin(degreeToRadian(g))+cos(degreeToRadian(a))*cos(degreeToRadian(g)), sin(degreeToRadian(a))*sin(degreeToRadian(b))*cos(degreeToRadian(g))-cos(degreeToRadian(a))*sin(degreeToRadian(g)), 0,
+                -sin(degreeToRadian(b)), cos(degreeToRadian(b))*sin(degreeToRadian(g)), cos(degreeToRadian(b))*cos(degreeToRadian(g)), 0,
+                0, 0, 0, 1 
+            );
+            Rotation_m = RotationMat; 
+        }
+
+        void Transform(Vec3<float> Newposition){
+            Mat4x4 TransformationMat(
+                1, 0, 0, Newposition.get(0),
+                0, 1, 0, Newposition.get(1),
+                0, 0, 1, Newposition.get(2),
+                0, 0, 0, 1 
+            );
+            Transformation_m = TransformationMat; 
+        }
+        void Transform(float x, float y, float z){
+            Mat4x4 TransformationMat(
+                1, 0, 0, x,
+                0, 1, 0, y,
+                0, 0, 1, z,
+                0, 0, 0, 1 
+            );
+            Transformation_m = TransformationMat; 
+        }
+        void Apply(){
+            PV = Projection_m * Camera_m * Transformation_m * Rotation_m;
+
+            Vec4<float> proj_pos1 = PV.multiplyVec4(Vertex01Homogen);
+            Vec3<float> pos1_NDC = proj_pos1.get_NDC();
+            ScreenVertex01 = pos1_NDC.get_screen_coords();
+            
+            Vec3<float> pos1 = Vertex01Homogen.get_Vec3();
+            Vec3<float> pos2 = Vertex02Homogen.get_Vec3();
+            Vec3<float> pos3 = Vertex03Homogen.get_Vec3();
+            
+            const int overflow = 10000;
+            bool vert1render = true;
+            bool vert2render = true;
+            bool vert3render = true;
+            if (ScreenVertex01.get(0) > overflow){
+                ScreenVertex01.set(0, overflow);
+            }
+            if (ScreenVertex01.get(1) > overflow){
+                ScreenVertex01.set(1, overflow);
+            }
+            if (ScreenVertex01.get(0) < -overflow){
+                ScreenVertex01.set(0, -overflow);
+            }
+            if (ScreenVertex01.get(1) < -overflow){
+                ScreenVertex01.set(1, -overflow);
+            }
+
+            Vec4<float> proj_pos2 = PV.multiplyVec4(Vertex02Homogen);
+            Vec3<float> pos2_NDC = proj_pos2.get_NDC();
+            ScreenVertex02 = pos2_NDC.get_screen_coords();
+
+            if (ScreenVertex02.get(0) > overflow){
+                ScreenVertex02.set(0, overflow);
+            }
+            if (ScreenVertex02.get(1) > overflow){
+                ScreenVertex02.set(1, overflow);
+            }
+            if (ScreenVertex02.get(0) < -overflow){
+                ScreenVertex02.set(0, -overflow);
+            }
+            if (ScreenVertex02.get(1) < -overflow){
+                ScreenVertex02.set(1, -overflow);
+            }
+
+
+            Vec4<float> proj_pos3 = PV.multiplyVec4(Vertex03Homogen);
+            Vec3<float> pos3_NDC = proj_pos3.get_NDC();
+            ScreenVertex03 = pos3_NDC.get_screen_coords();
+            if (ScreenVertex03.get(0) > overflow){
+                ScreenVertex03.set(0, overflow);
+            }
+            if (ScreenVertex03.get(1) > overflow){
+                ScreenVertex03.set(1, overflow);
+            }
+            if (ScreenVertex03.get(0) < -overflow){
+                ScreenVertex03.set(0, -overflow);
+            }
+            if (ScreenVertex03.get(1) < -overflow){
+                ScreenVertex03.set(1, -overflow);
+            }
+
+        }
+        void CullFace(Vec3<float> startPos){
+            Vec3 Vec1_3 = Vertex01Homogen.get_Vec3();
+            Vec3 Vec2_3 = Vertex02Homogen.get_Vec3();
+            Vec3 Vec3_3 = Vertex03Homogen.get_Vec3();
+            Vec3 Vec1 = Vec2_3 - Vec1_3;
+            Vec3 Vec2 = Vec3_3 - Vec1_3;
+            NormalTriangle = CrossProduct(Vec1, Vec2);
+
+            float similarity = Dot(NormalTriangle, startPos);
+            if (similarity > 0){
+                isRender = false;        
+            }else{
+                isRender = true;        
+            }
+        }
+        void FixRender(Vec3<float> startPos){
+            Vec3<float> zLine(0,0,1);
+            float similarity = Dot(MidPoint+zLine, startPos);
+
+            if (similarity > 0){
+                isRender = false;        
+            }else{
+                isRender = true;        
+            }
+        }
+        /*
         void Projection(Mat4x4 projetion, Mat4x4 camera, Mat4x4 transform, Mat4x4 rotate, Vec3<float> startPos){
-            //ScreenVertex01 = ProjectVertex(Vertex01);
-            //ScreenVertex02 = ProjectVertex(Vertex02);
-            //ScreenVertex03 = ProjectVertex(Vertex03);
-            //
 
             PV = projetion * camera * transform * rotate;
             Vec4<float> proj_pos1 = PV.multiplyVec4(Vertex01Homogen);
@@ -422,32 +511,12 @@ class Triangle{
             
             Vec3<float> pos1 = Vertex01Homogen.get_Vec3();
 
-            //std::cout << "pos1: " << std::endl;            
-            //pos1.show();
+
             Vec3<float> pos2 = Vertex02Homogen.get_Vec3();
 
-            //std::cout << "pos2: " << std::endl;            
-            //pos2.show();
+
             Vec3<float> pos3 = Vertex03Homogen.get_Vec3();
-            //std::cout << "pos3: " << std::endl;
-            //pos3.show();
-            //std::cout << "startPos: " << std::endl;
-            //startPos.show();
-            //std::vector<Vec4> posTriangeAll;
-            //posTriangeAll.push_back(Vertex01Homogen);
-            //posTriangeAll.push_back(Vertex02Homogen);
-            //posTriangeAll.push_back(Vertex03Homogen);
-            //float posrender = minVector(posTriangeAll, 2);
-            //std::cout << "z: " << startPos.get(2) << std::endl;
-            //std::cout << "pos z: " << posrender << std::endl; 
-            
-            /*if (startPos.get(2) > -Vertex01Homogen.get(2)
-                & startPos.get(2) > -Vertex02Homogen.get(2)
-                & startPos.get(2) > -Vertex03Homogen.get(2)){
-                isRender = true;
-            }else{
-                isRender = false;        
-            }*/
+
             
             const int overflow = 10000;
             bool vert1render = true;
@@ -467,16 +536,7 @@ class Triangle{
             }
 
 
-            /*if (!(ScreenVertex01.get(0) < 512
-                && ScreenVertex01.get(0) > 0
-                && ScreenVertex01.get(1) < 512
-                && ScreenVertex01.get(1) > 0)){
-                vert1render = false;
-            }else{
-                vert1render = true;
-            }*/
 
-            //ScreenVertex01.show();
 
             Vec4<float> proj_pos2 = PV.multiplyVec4(Vertex02Homogen);
             Vec3<float> pos2_NDC = proj_pos2.get_NDC();
@@ -495,15 +555,6 @@ class Triangle{
                 ScreenVertex02.set(1, -overflow);
             }
 
-           /* if (!(ScreenVertex02.get(0) < 512
-                && ScreenVertex02.get(0) > 0
-                && ScreenVertex02.get(1) < 512
-                && ScreenVertex02.get(1) > 0)){
-                vert2render = false;
-            }else{
-                vert2render = true;
-            }*/
-            //ScreenVertex02.show();
 
             Vec4<float> proj_pos3 = PV.multiplyVec4(Vertex03Homogen);
             Vec3<float> pos3_NDC = proj_pos3.get_NDC();
@@ -521,25 +572,7 @@ class Triangle{
                 ScreenVertex03.set(1, -overflow);
             }
 
-           /* if (!(ScreenVertex03.get(0) < 512
-                && ScreenVertex03.get(0) > 0
-                && ScreenVertex03.get(1) < 512
-                && ScreenVertex03.get(1) > 0)){
-                vert3render = false;
-            }else{
-                vert3render = true;
-            }*/
-            //isRender = vert1render || vert2render || vert3render; 
-            //ScreenVertex03.show();
-           /* std::cout << "pos1.get(2)" << pos1.get(2) << std::endl;            
-            std::cout << "pos2.get(2)" << pos2.get(2) << std::endl;
-            std::cout << "pos3.get(2)" << pos3.get(2) << std::endl;
-            */
-            /*if (startPos.get(2) > -pos2.get(2)){
-                isRender = false;        
-            }else{
-                isRender = true;        
-            }*/
+
     
             Vec3 Vec1_3 = Vertex01Homogen.get_Vec3();
             Vec3 Vec2_3 = Vertex02Homogen.get_Vec3();
@@ -551,56 +584,52 @@ class Triangle{
             float similarity = Dot(NormalTriangle, startPos);
             Vec3<float> zLine(0,0,1);
             float similaritZ = Dot(MidPoint+zLine, startPos);
-            std::cout << "Dot Z line: " << similaritZ << std::endl;
 
-            //std::cout << "Dot: " << similarity << std::endl;
             if (similarity > 0 || similaritZ > 0){
                 isRender = false;        
             }else{
                 isRender = true;        
             }
         }
-        void rotation(float a, float b, float g){
+        */
 
-            //PV = PV * Rotation; 
-        }
-        void transform(Vec3<float> Newposition){
-            Mat4x4 Transformation(
-                1, 0, 0, Newposition.get(0),
-                0, 1, 0, Newposition.get(1),
-                0, 0, 1, Newposition.get(2),
-                0, 0, 0, 1 
-            );
-            PV = PV * Transformation; 
-        }
         void Clip(std::vector<std::vector<Vec2<float>>> cilp){
             if (isRender){
                 SutherlandHodgman(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, cilp);
             }
         }
-        void Zbuffer(double **z_buffer, Vec3<float> startPos){
-            //Vec3 DistanceZ = MidPoint - startPos;
-            //float DistanceZ = sqrt(pow(MidPoint.get(0) - startPos.get(0),2)+pow(MidPoint.get(1) - startPos.get(1),2)+pow(MidPoint.get(2) - startPos.get(2),2));
-            //float DistanceZ = 0;
-            //zDistance = DistanceZ;
-
-            
-            /*if (isTriangleDrawn(ScreenVertex01,ScreenVertex02,ScreenVertex03)){
-                for (int x = 0;x < 512; x++){
-                    for (int y = 0;y < 512; y++){
-                        if (isInside(ScreenVertex01.get(0), ScreenVertex01.get(1), 
-                                    ScreenVertex02.get(0), ScreenVertex02.get(1), 
-                                    ScreenVertex03.get(0), ScreenVertex03.get(1), 
-                                    x, y)){
-                            Vec2 point(x, y); 
-                            Vec3 baricentric = Barycentric(point, ScreenVertex01, ScreenVertex02, ScreenVertex03);
-                            baricentric.show();
-                        }
-                    }
-                }
-            }*/
+        void isUseZbuffer(bool isSet){
+            UseZbuffer = isSet; 
         }
-        void Unwrap(double **z_buffer, Vec3<float> startPos){
+        void isUseZTexture(bool isSet){
+            trig_struct.isUseTexture = isSet; 
+        }
+        void setTexture(std::string str_path){
+            cimg_library::CImg<unsigned char> src(str_path.c_str()); 
+            trig_struct.texture = src; 
+            trig_struct.isUseTexture = false;
+        }
+        void setTexture(std::string str_path, bool isSet){
+            cimg_library::CImg<unsigned char> src(str_path.c_str()); 
+            trig_struct.texture = src; 
+            trig_struct.isUseTexture = isSet;
+        }
+        void setTextureCoords(Vec2<float> st0_n, Vec2<float> st1_n, Vec2<float> st2_n){
+            st0 = st0_n;
+            st1 = st1_n;
+            st2 = st2_n;
+        }
+        void setTextureCoords(float st0_1, float st0_2, float st1_1, float st1_2, float st2_1, float st2_2){
+            st0.set(0, st0_1);
+            st0.set(1, st0_2);
+
+            st1.set(0, st1_1);
+            st1.set(1, st1_2);
+
+            st2.set(0, st2_1);
+            st2.set(1, st2_2);
+        }
+        void Unwrap(double **z_buffer){
             
             trig_struct.vert1 = Vertex01; 
             trig_struct.vert2 = Vertex02;
@@ -614,41 +643,11 @@ class Triangle{
             trig_struct.ScreenVert2 = ScreenVertex02;
             trig_struct.ScreenVert3 = ScreenVertex03;
             trig_struct.normal = NormalTriangle;
-            trig_struct.isUseTexture = true;
             if (isRender){
                 DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, z_buffer, trig_struct);
             }
         }
-        void WrapTexture(double **z_buffer){
-            //cimg_library::CImg<unsigned char> src("src/chess.png"); 
-            //texture = src;
-
-           /* int sizeXimage = 512;
-            int sizeYimage = 512;
-            trig_struct.isUseTexture = true;
-            
-            for (int x = 0;x < 512; x++){
-                for (int y = 0;y < 512; y++){
-                    if (isInside(trig_struct.ScreenVert1.get(0), trig_struct.ScreenVert1.get(1), 
-                                    trig_struct.ScreenVert2.get(0), trig_struct.ScreenVert2.get(1), 
-                                    trig_struct.ScreenVert3.get(0), trig_struct.ScreenVert3.get(1), 
-                                    x, y)){
-                            Vec2<float> point(x, y); 
-                            Vec3<float> baricentric = Barycentric(point, trig_struct.ScreenVert1, trig_struct.ScreenVert2, trig_struct.ScreenVert3);
-                            float u = baricentric.get(0)*st0.get(0)+baricentric.get(1)*st1.get(0)+baricentric.get(2)*st2.get(0); 
-                            float v = baricentric.get(0)*st0.get(1)+baricentric.get(1)*st1.get(1)+baricentric.get(2)*st2.get(1);
-                            std::cout << "u: " << u*sizeXimage << " v: " << v*sizeYimage << std::endl;
-                            trig_struct.u = u*sizeXimage;
-                            trig_struct.v = v*sizeXimage;
-
-                            if (isRender){
-                                DrawTriangle(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, z_buffer, trig_struct);
-                            }
-                    }
-                }
-            }*/
-        }
-        void Show(){
+        void Debug(){
             std::cout << "triangle: " << std::endl;
             Vertex01Homogen.show();
             Vertex02Homogen.show();
@@ -656,12 +655,8 @@ class Triangle{
             std::cout << "----------------" << std::endl;
 
         }
-        void Render(double **z_buffer, Vec3<float> startPos){
-            /*struct triangleInfo{
-                Vec3 vert1;
-                Vec3 vert2;
-                Vec3 vert3;
-            };*/
+        void RenderWireframe(double **z_buffer, Vec3<float> startPos){
+
             trig_struct.vert1 = Vertex01; 
             trig_struct.vert2 = Vertex02;
             trig_struct.vert3 = Vertex03;
@@ -693,15 +688,13 @@ std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
     while (std::getline(file_model, file_model_data))
     {
         std::vector<std::string> data_model = tokenize(file_model_data, ' ');
-        //std::cout << data_model[0] << std::endl;
         if (data_model[0].compare("v") == 0){
             std::pair<Vec4<float>, int> VertexData;
              
-            std::cout << "vertex: " << data_model[1] << " " << data_model[2] << " " << data_model[3] << std::endl;
+            //std::cout << "vertex: " << data_model[1] << " " << data_model[2] << " " << data_model[3] << std::endl;
             Vec4 Vertex(std::stof(data_model[1]), std::stof(data_model[2]), std::stof(data_model[3]), 1.0f);
             VertexData.first = Vertex;
             VertexData.second = numVertex;
-            //Triangle trig(rend, data_model[1], data_model[2], data_model[3]);
             obj_verticies.push_back(VertexData);
             numVertex++;
         }
@@ -710,30 +703,20 @@ std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
             Vec4<float> Vertex1;
             Vec4<float> Vertex2;
             Vec4<float> Vertex3;
-            //std::cout << "file: " << data_model[1] << " " << data_model[2] << " " << data_model[3] << std::endl; 
             for (int i = 0; i < obj_verticies.size();i++){
                 
 
 
                 if (obj_verticies[i].second == std::stoi(data_model[1])){
-                    /*std::cout << "vertex id: " << obj_verticies[i].second << std::endl;
-                    std::cout << "vertex: " << obj_verticies[i].first.get(0) << " " << obj_verticies[i].first.get(1) << " " << obj_verticies[i].first.get(2) << std::endl; 
-                    std::cout << "data_model: " << data_model[1] << std::endl; 
-                    */
+
                     Vertex1 = obj_verticies[i].first; 
                 }
                 if (obj_verticies[i].second == std::stoi(data_model[2])){
-                    /*std::cout << "vertex id: " << obj_verticies[i].second << std::endl;
-                    std::cout << "vertex: " << obj_verticies[i].first.get(0) << " " << obj_verticies[i].first.get(1) << " " << obj_verticies[i].first.get(2) << std::endl; 
-                    std::cout << "data_model: " << data_model[2] << std::endl; 
-                    */
+
                     Vertex2 = obj_verticies[i].first;
                 }
                 if (obj_verticies[i].second == std::stoi(data_model[3])){
-                    /*std::cout << "vertex id: " << obj_verticies[i].second << std::endl;
-                    std::cout << "vertex: " << obj_verticies[i].first.get(0) << " " << obj_verticies[i].first.get(1) << " " << obj_verticies[i].first.get(2) << std::endl; 
-                    std::cout << "data_model: " << data_model[3] << std::endl; 
-                    */
+
                     Vertex3 = obj_verticies[i].first;
                 }
             }
@@ -742,9 +725,7 @@ std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
             
         }
     }
-    /*for (int i = 0; i < faces.size();){
-        faces[i].Show();
-    }*/
+
     return faces;
 }
 
@@ -771,11 +752,8 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2<float> point1, Vec2<float> po
 
             if (isLineIntersect(perv_point, current_point,cilpEdge[i][0], cilpEdge[i][1])) {
                 Vec2<float> Intersecting_point = isLineIntersectPos(perv_point, current_point, cilpEdge[i][0], cilpEdge[i][1]);
-                //std::cout << "if (isLineIntersect(perv_point, current_point,cilpEdge[i][0], cilpEdge[i][1]))" << std::endl; 
                 if (isPointInsideClip(current_point, 512, 512)){
-                    //std::cout << "if (isPointInsideClip(current_point, 512, 512))" << std::endl; 
                     if (!isPointInsideClip(perv_point, 512, 512)){
-                        //std::cout << "if (!isPointInsideClip(perv_point, 512, 512))" << std::endl; 
                         returntriangle.push_back(Intersecting_point);
  
                     }
@@ -783,30 +761,11 @@ void SutherlandHodgman(SDL_Renderer *renderer,Vec2<float> point1, Vec2<float> po
 
                 }
                 if (isPointInsideClip(perv_point, 512, 512)){
-                    //std::cout << "if (isPointInsideClip(perv_point, 512, 512))" << std::endl; 
                     returntriangle.push_back(Intersecting_point);
                 }
 
             }
         }
     }
-    /*for (int i = 0; i < returntriangle.size(); i++){
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        SDL_RenderDrawPoint(renderer, returntriangle[i].get(0), returntriangle[i].get(1));
 
-    }
-    if (returntriangle.size() == 3){ 
-        DrawLine(renderer, returntriangle[0], returntriangle[1]);
-        DrawLine(renderer, returntriangle[0], returntriangle[2]);
-        DrawLine(renderer, returntriangle[1], returntriangle[2]);
-    }*/
-    //std::cout << "size triangle: " << returntriangle.size();
-    //
-    // Rewrite send triangle points
-    //
-    /*if (returntriangle.size() == 3){
-        Triangle cliptrig(renderer, returntriangle[0], returntriangle[1], returntriangle[2]);
-        cliptrig.Render();
-    }*/
-    //cliptrig.Unwrap();
 }

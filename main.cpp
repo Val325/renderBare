@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <bits/stdc++.h>
 #include <vector>
+
 const int widthWindow = 512;
 const int heightWindow = 512;
 const int widthViewport = 1;
@@ -41,17 +42,10 @@ struct triangleInfo{
 };
 #include "render.cpp"
 
-
-
-
 int main(void) {
     SDL_Event event;
-    //SDL_Renderer *renderer;
-    //SDL_Window *window;
-    //std::vector<std::vector<float>> *z_buffer(widthWindow, *std::vector<float>(heightWindow, std::numeric_limits<float>::infinity()));
-    SDL_Window *window = SDL_CreateWindow("3D Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, widthWindow, heightWindow, SDL_WINDOW_SHOWN);
+    SDL_Window *window = SDL_CreateWindow("Software Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, widthWindow, heightWindow, SDL_WINDOW_SHOWN);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED); 
-
 
     if (SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 )
     {
@@ -59,29 +53,7 @@ int main(void) {
     }
 
     SDL_CreateWindowAndRenderer(widthWindow, heightWindow, 0, &window, &renderer);
-    //SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    //SDL_RenderClear(renderer);
-    //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     
-    float offsetY = -2.0;
-    Vec3<float> vAf(-2, -2.5, 5); 
-    Vec3<float> vBf(-2,  -1.5, 5);
-    Vec3<float> vCf(-1,  -1.5, 5);
-    Vec3<float> vDf(-1, -2.5, 5);
-
-    Vec3<float> vAb(-2, -2.5, 6);
-    Vec3<float> vBb(-2,  -1.5, 6);
-    Vec3<float> vCb(-1,  -1.5, 6);
-    Vec3<float> vDb(-1, -2.5, 6);
-    
-/*    Vec3 Vertex01(-2, -2.5, 3);
-    Vec3 Vertex02(-2, -1.5, 4);
-    Vec3 Vertex03(1, -1.5, 4);
-*/
-
-    /*Vec4 Vertex01(-2, -2.5, 3, 1);
-    Vec4 Vertex02(-2, -1.5, 4, 1);
-    Vec4 Vertex03(1, -1.5, 4, 1);*/
 
     Vec4<float> Vertex01(0, 0, 0, 1);
     Vec4<float> Vertex02(0, 0, 1, 1);
@@ -96,10 +68,6 @@ int main(void) {
     Vec4<float> Vertex03tri2(1, 0, 0, 1);
     //unsigned int time = SDL_GetTicks();
 
-    // Texture coordinates
-    Vec2<float> st1(0, 0);
-    Vec2<float> st2(1, 0);
-    Vec2<float> st3(0, 1);
     Triangle trig(renderer, Vertex01, Vertex02, Vertex03);
     Triangle trig1(renderer, Vertex01tri1, Vertex02tri1, Vertex03tri1);
     Triangle trig2(renderer, Vertex01tri2, Vertex02tri2, Vertex03tri2);
@@ -131,221 +99,46 @@ int main(void) {
     cilpEdges.push_back(bottomEdge);
     cilpEdges.push_back(rightEdge);
     cilpEdges.push_back(leftEdge);
-   
-    float xPoStart = 1.0f;
-    float yPoStart = 0.0f;
-    float zPoStart = -1.0f;
 
     float xPos = -2.0f;
     float yPos = -1.5f;
     float zPos = -1.0f;
     Vec3<float> cameraPos(xPos, yPos, zPos);
 
-    //https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78
-
-    Mat4x4 Camera(
-        0.0f, 0.0f, 1.0f, -xPos,
-        0.0f, -1.0f, 0.0f, -yPos,
-        1.0f, 0.0f, 0.0f, -zPos,
-        0.0f, 0.0f, 0.0f, 1.0f 
-    ); 
-    float aspect_ratio = widthWindow / heightWindow;
-    float scale = 1 / tan(angleOfView * 0.5 * PI / 180);
-    float aspect_scale = 1 / (tan(angleOfView * 0.5 * PI / 180) * aspect_ratio);
-    float depth_norm = -(far+near) / (far-near);
-    float depth_norm2 = -2*far*near / (far-near);
-    
-    //https://medium.com/@jrespinozah/3d-graphics-the-perspective-projection-d2076f42cdf3
-    Mat4x4 Projection(
-        aspect_scale, 0, 0, 0,
-        0, scale, 0, 0,
-        0, 0, depth_norm, depth_norm2,
-        0, 0, 1, 0 
-    );
-
-    float xPosNew = -2.0f;
-    float yPosNew = -0.5f;
-    float zPosNew = -1.0f;
-    Mat4x4 Transformation(
-        1, 0, 0, xPosNew,
-        0, 1, 0, yPosNew,
-        0, 0, 1, zPosNew,
-        0, 0, 0, 1 
-    );
-    float a = 60.0f;
-    float b = 60.0f;
-    float g = 60.0f;
-
-    Mat4x4 Rotation(
-        cos(degreeToRadian(a))*cos(degreeToRadian(b)), cos(degreeToRadian(a))*sin(degreeToRadian(b))*sin(degreeToRadian(g))-sin(degreeToRadian(a))*cos(degreeToRadian(g)), cos(degreeToRadian(a))*sin(degreeToRadian(b))*cos(degreeToRadian(g))+sin(degreeToRadian(a))*sin(degreeToRadian(g)), 0,
-        sin(degreeToRadian(a))*cos(degreeToRadian(b)), sin(degreeToRadian(a))*sin(degreeToRadian(b))*sin(degreeToRadian(g))+cos(degreeToRadian(a))*cos(degreeToRadian(g)), sin(degreeToRadian(a))*sin(degreeToRadian(b))*cos(degreeToRadian(g))-cos(degreeToRadian(a))*sin(degreeToRadian(g)), 0,
-        -sin(degreeToRadian(b)), cos(degreeToRadian(b))*sin(degreeToRadian(g)), cos(degreeToRadian(b))*cos(degreeToRadian(g)), 0,
-        0, 0, 0, 1 
-    );
-   /*  
-    float top = scale * near;
-    float bottom = -top;
-    float right = top*aspect_ratio;
-    float left = -top*aspect_ratio;
-    
-    float proj1 = 2*near / (right-left);
-    float proj2 = 2*near / (top-bottom);
-    float proj3 = -near*(right+left) / (right-left);
-    float proj4 = -near*(top+bottom) / (top-bottom);
-    float proj5 = -(far + near) / (far-near);
-    float proj6 = 2*far*near / (near-far); 
-    */
-    //float proj1 = -far/ (far-near); 
-    //float proj2 = -far*near / (far-near);
-    //float proj1 = -(far + near / far-near); 
-    //float proj2 = -(2*far*near / far-near);
-
-//    Mat4x4 PV = Projection * Camera;
-    //PV.show();
-    //std::cout << "-------" << std::endl;
-    //Vec4 pos1(1, 2, 3, 1);
-    //pos1.show();
-    //proj_pos1.show();
-
-    //std::cout << "-------" << std::endl;
-    //proj_pos1.show();
-    //std::cout << "-------" << std::endl;
-/*
-        Vec4 proj_pos1 = PV.multiplyVec4(Vertex01);
-        Vec3 pos1_NDC = proj_pos1.get_NDC();
-        Vec2 pos1_Screen = pos1_NDC.get_screen_coords();
-
-        Vec4 proj_pos2 = PV.multiplyVec4(Vertex02);
-        Vec3 pos2_NDC = proj_pos2.get_NDC();
-        Vec2 pos2_Screen = pos2_NDC.get_screen_coords();
-
-        Vec4 proj_pos3 = PV.multiplyVec4(Vertex03);
-        Vec3 pos3_NDC = proj_pos3.get_NDC();
-        Vec2 pos3_Screen = pos3_NDC.get_screen_coords();
-*/
-    /*Projection.show();
-    std::cout << "-------" << std::endl;
-    Camera.show();
-    std::cout << "-------" << std::endl;
-    PV.show();
-    std::cout << "-------" << std::endl;*/
-    //std::vector<Triangle> triangles = loadObj(renderer, "8edge.obj");
-    //std::vector<Triangle> triangles = loadObj(renderer, "3dmodels/M4.obj");
-    //std::cout << "triangles: " << triangles.size() << std::endl;
     unsigned int time = 0;
-    Vec3<float> position2(2, 2, 2);
     while (1) {
-    double **z_buffer = new double*[widthWindow];
-    for(int i = 0; i < widthWindow; ++i) {
-        z_buffer[i] = new double[heightWindow];
-    }
-    for (int i = 0; i < widthWindow; ++i){
-        for (int j = 0; j < heightWindow; ++j){
-            z_buffer[i][j] = std::numeric_limits<double>::infinity(); 
+        double **z_buffer = new double*[widthWindow];
+        
+        for(int i = 0; i < widthWindow; ++i) {
+            z_buffer[i] = new double[heightWindow];
         }
-    }
+        
+        for (int i = 0; i < widthWindow; ++i){
+            for (int j = 0; j < heightWindow; ++j){
+                z_buffer[i][j] = std::numeric_limits<double>::infinity(); 
+            }
+        }
+
         unsigned int now = SDL_GetTicks();
         unsigned int delta_time = now - time;
-        //bool canMove;
         time = now;
 
-
-        /*if (delta_time > 1000){
-            canMove = true;
-            time = now;
-        }else{
-            canMove = false;            
-        }
-        std::cout << "now: " << now << std::endl; 
-        std::cout << "delta_time: " << delta_time << std::endl; 
-        */
-        /*
-        Mat4x4 PV = Projection * Camera;
-        Vec4 proj_pos1 = PV.multiplyVec4(Vertex01);
-        Vec3 pos1_NDC = proj_pos1.get_NDC();
-        Vec2 pos1_Screen = pos1_NDC.get_screen_coords();
-
-        Vec4 proj_pos2 = PV.multiplyVec4(Vertex02);
-        Vec3 pos2_NDC = proj_pos2.get_NDC();
-        Vec2 pos2_Screen = pos2_NDC.get_screen_coords();
-
-        Vec4 proj_pos3 = PV.multiplyVec4(Vertex03);
-        Vec3 pos3_NDC = proj_pos3.get_NDC();
-        Vec2 pos3_Screen = pos3_NDC.get_screen_coords();
-        */
         cameraPos.set(0, xPos);
         cameraPos.set(1, yPos);
         cameraPos.set(2, zPos);
-
-
-
         SDL_RenderClear(renderer);
-        //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        
-        //trig.Unwrap();        
 
-        // The front face
-        /*DrawLine(renderer, ProjectVertex(vAf), ProjectVertex(vBf));
-        DrawLine(renderer, ProjectVertex(vBf), ProjectVertex(vCf));
-        DrawLine(renderer, ProjectVertex(vCf), ProjectVertex(vDf));
-        DrawLine(renderer, ProjectVertex(vDf), ProjectVertex(vAf));
         
-        // The back face
-        DrawLine(renderer, ProjectVertex(vAb), ProjectVertex(vBb));
-        DrawLine(renderer, ProjectVertex(vBb), ProjectVertex(vCb));
-        DrawLine(renderer, ProjectVertex(vCb), ProjectVertex(vDb));
-        DrawLine(renderer, ProjectVertex(vDb), ProjectVertex(vAb));
-
-        // The front-to-back edges
-        DrawLine(renderer, ProjectVertex(vAf), ProjectVertex(vAb));
-        DrawLine(renderer, ProjectVertex(vBf), ProjectVertex(vBb));
-        DrawLine(renderer, ProjectVertex(vCf), ProjectVertex(vCb));
-        DrawLine(renderer, ProjectVertex(vDf), ProjectVertex(vDb));*/
-        
-        //triangle
-        xPosNew = 1.0f;
-        yPosNew = 0.0f;
-        zPosNew = -1.0f;
-
-        Transformation.set(0, 3, xPosNew);
-        Transformation.set(1, 3, yPosNew);
-        Transformation.set(2, 3, zPosNew);
+        trig.Projection();
+        trig.View(cameraPos);
+        trig.Rotatition(0.0f, 0.0f, 0.0f);
+        trig.Transform(1.0f, 0.0f, -1.0f);
         trig.Clip(cilpEdges);
-        trig.Projection(Projection, Camera, Transformation, Rotation, cameraPos);
-        trig.Zbuffer(z_buffer, cameraPos);
-        //trig.rotation(60.0, 30.0, 10.0);
-        //trig.Render(z_buffer,cameraPos);
-        trig.Unwrap(z_buffer,cameraPos);        
-        //trig.transform(position2);
-       // trig.WrapTexture(z_buffer);
-
-
-        /*xPosNew = 2.0f;
-        yPosNew = 0.6f;
-        zPosNew = 1.5f;
-
-        Transformation.set(0, 3, xPosNew);
-        Transformation.set(1, 3, yPosNew);
-        Transformation.set(2, 3, zPosNew);
-        SDL_SetRenderDrawColor(renderer, 255, 128, 0, 255);
-        trig1.Clip(cilpEdges);
-        trig1.Projection(Projection, Camera, Transformation, cameraPos);
-        trig1.Zbuffer(z_buffer, cameraPos);        
-        trig1.Unwrap(z_buffer,cameraPos);
-
-        xPosNew = 2.0f;
-        yPosNew = 0.7f;
-        zPosNew = 1.5f;
-
-        Transformation.set(0, 3, xPosNew);
-        Transformation.set(1, 3, yPosNew);
-        Transformation.set(2, 3, zPosNew);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-        trig2.Clip(cilpEdges);
-        trig2.Projection(Projection, Camera, Transformation, cameraPos);
-        trig2.Zbuffer(z_buffer, cameraPos);        
-        trig2.Unwrap(z_buffer,cameraPos);*/
-        //trig1.Render(z_buffer,cameraPos);
+        trig.Apply();
+        trig.CullFace(cameraPos);
+        trig.FixRender(cameraPos);
+        trig.setTexture("src/tex4.jpg", true);
+        trig.Unwrap(z_buffer);
 
         if (SDL_PollEvent(&event) != 0){
             if(event.type == SDL_QUIT )
@@ -366,28 +159,28 @@ int main(void) {
                         break;
                     case SDLK_w:
                         zPos += movement;                        
-                        Camera.set(2, 3, -zPos);
+                        cameraPos.set(2, -zPos);
                         break;
                     case SDLK_s:
                         zPos -= movement;
-                        Camera.set(2, 3, -zPos);
+                        cameraPos.set(2, -zPos);
                         break;
                     case SDLK_a:
                         xPos -= movement;
-                        Camera.set(0, 3, -xPos);
+                        cameraPos.set(0, -xPos);
                         break;
                     case SDLK_d:
                         xPos += movement;
-                        Camera.set(0, 3, -xPos);
+                        cameraPos.set(0, -xPos);
                         break;
                     case SDLK_LSHIFT:
                         yPos -= movement;
-                        Camera.set(1, 3, -yPos);
+                        cameraPos.set(1, -yPos);
                         break;
 
                     case SDLK_LCTRL:
                         yPos += movement;
-                        Camera.set(1, 3, -yPos);
+                        cameraPos.set(1, -yPos);
                         break;
 
                 }
@@ -406,17 +199,7 @@ int main(void) {
             triangles[i].Unwrap();
             triangles[i].Render();
         }*/
-        /*
-        DrawLine(renderer, pos1_Screen, pos2_Screen);
-        DrawLine(renderer, pos1_Screen, pos3_Screen);
-        DrawLine(renderer, pos2_Screen, pos3_Screen);
-        */
 
-        /*
-        DrawLine(renderer, ProjectVertex(Vertex01), ProjectVertex(Vertex02));
-        DrawLine(renderer, ProjectVertex(Vertex01), ProjectVertex(Vertex03));
-        DrawLine(renderer, ProjectVertex(Vertex02), ProjectVertex(Vertex03));
-        */
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderPresent(renderer);
 
