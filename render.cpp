@@ -323,7 +323,7 @@ class Triangle{
             Vertex01Homogen = Vert1;
             Vertex02Homogen = Vert2;
             Vertex03Homogen = Vert3;
-            isRender = true;
+            //isRender = true;
 
             Vec3 centerTiangle((Vert1.get(0) + Vert2.get(0) + Vert3.get(0))/3, 
                     (Vert1.get(1) + Vert2.get(1) + Vert3.get(1))/3, 
@@ -423,7 +423,7 @@ class Triangle{
             Vec3<float> pos1 = Vertex01Homogen.get_Vec3();
             Vec3<float> pos2 = Vertex02Homogen.get_Vec3();
             Vec3<float> pos3 = Vertex03Homogen.get_Vec3();
-            
+
             const int overflow = 10000;
             bool vert1render = true;
             bool vert2render = true;
@@ -474,24 +474,34 @@ class Triangle{
             if (ScreenVertex03.get(1) < -overflow){
                 ScreenVertex03.set(1, -overflow);
             }
+            Vertex01 = proj_pos1.get_Vec3();
+            Vertex02 = proj_pos2.get_Vec3();
+            Vertex03 = proj_pos3.get_Vec3();
 
         }
-        void CullFace(Vec3<float> startPos){
-            Vec3 Vec1_3 = Vertex01Homogen.get_Vec3();
-            Vec3 Vec2_3 = Vertex02Homogen.get_Vec3();
-            Vec3 Vec3_3 = Vertex03Homogen.get_Vec3();
+        void CalculateNormal(){
+            Vec3 Vec1_3 = Vertex01;
+            Vec3 Vec2_3 = Vertex02;
+            Vec3 Vec3_3 = Vertex03;
             Vec3 Vec1 = Vec2_3 - Vec1_3;
             Vec3 Vec2 = Vec3_3 - Vec1_3;
             NormalTriangle = CrossProduct(Vec1, Vec2);
-
+        }
+        void CullFace(Vec3<float> startPos){
+            CalculateNormal();
             float similarity = Dot(NormalTriangle, startPos);
-            if (similarity > 0){
+            if (similarity < 0){
+                //NormalTriangle.show();
+                //Vec1_3.show();
+                std::cout << "Dot: " << similarity << std::endl; 
                 isRender = false;        
             }else{
                 isRender = true;        
             }
         }
         void FixRender(Vec3<float> startPos){
+            if (!isRender) return;
+
             Vec3<float> zLine(0,0,1);
             float similarity = Dot(MidPoint+zLine, startPos);
 

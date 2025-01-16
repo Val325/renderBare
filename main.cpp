@@ -13,7 +13,7 @@ const float NearDistance = 0.5;
 
 float angleOfView = 90; 
 float near = 0.1; 
-float far = 100;
+float far = 10;
 #define PI 3.14159265
 
 float degreeToRadian(float degrees){
@@ -22,6 +22,20 @@ float degreeToRadian(float degrees){
 
 #include "include/CImg.h"
 #include "matrix.cpp"
+
+void MakeDepthBufferImg(double **z_buffer){
+    cimg_library::CImg<unsigned char> depth_map(512, 512, 1, 1, 0);
+    depth_map.channel(0);
+    for (int i = 0; i < 512;i++){
+        for (int j = 0; j < 512;j++){
+            std::cout << depth_map[i*512+j] << std::endl;
+            unsigned char Color[0];
+            Color[0] = depth_map[i*512+j] * 70; 
+            depth_map.draw_point(i, j, 0, Color, 1);
+        }
+    }
+    depth_map.save("zbuf.png");
+}
 
 struct triangleInfo{
     Vec3<float> vert1;
@@ -41,6 +55,8 @@ struct triangleInfo{
     Vec2<float> ScreenVert3;
 };
 #include "render.cpp"
+
+
 
 int main(void) {
     SDL_Event event;
@@ -104,10 +120,12 @@ int main(void) {
     float yPos = -1.5f;
     float zPos = -1.0f;
     Vec3<float> cameraPos(xPos, yPos, zPos);
-
+    
+    trig.setTexture("src/tex4.jpg", true);
+    trig1.setTexture("src/tex3.jpg", true);
+    trig2.setTexture("src/tex5.jpg", true);
     unsigned int time = 0;
-    while (1) {
-        double **z_buffer = new double*[widthWindow];
+       double **z_buffer = new double*[widthWindow];
         
         for(int i = 0; i < widthWindow; ++i) {
             z_buffer[i] = new double[heightWindow];
@@ -118,6 +136,8 @@ int main(void) {
                 z_buffer[i][j] = std::numeric_limits<double>::infinity(); 
             }
         }
+    while (1) {
+ 
 
         unsigned int now = SDL_GetTicks();
         unsigned int delta_time = now - time;
@@ -131,15 +151,33 @@ int main(void) {
         
         trig.Projection();
         trig.View(cameraPos);
-        trig.Rotatition(90.0f, 0.0f, 90.0f);
-        trig.Transform(1.0f, 0.0f, -1.0f);
+        trig.Rotatition(90.0f, 0.0f, 0.0f);
+        trig.Transform(0.5f, 0.0f, -0.9f);
         trig.Clip(cilpEdges);
         trig.Apply();
         trig.CullFace(cameraPos);
-        trig.FixRender(cameraPos);
-        trig.setTexture("src/tex4.jpg", true);
+        trig.FixRender(cameraPos); 
         trig.Unwrap(z_buffer);
 
+        trig1.Projection();
+        trig1.View(cameraPos);
+        trig1.Rotatition(90.0f, 0.0f, 0.0f);
+        trig1.Transform(0.3f, 0.0f, -0.6f);
+        trig1.Clip(cilpEdges);
+        trig1.Apply();
+        trig1.CullFace(cameraPos);
+        trig1.FixRender(cameraPos); 
+        trig1.Unwrap(z_buffer);
+        
+        trig2.Projection();
+        trig2.View(cameraPos);
+        trig2.Rotatition(90.0f, 0.0f, 0.0f);
+        trig2.Transform(0.6f, 0.0f, -1.0f);
+        trig2.Clip(cilpEdges);
+        trig2.Apply();
+        trig2.CullFace(cameraPos);
+        trig2.FixRender(cameraPos); 
+        trig2.Unwrap(z_buffer);
         if (SDL_PollEvent(&event) != 0){
             if(event.type == SDL_QUIT )
             {
@@ -173,6 +211,9 @@ int main(void) {
                         xPos += movement;
                         cameraPos.set(0, -xPos);
                         break;
+                    case SDLK_b:
+                        MakeDepthBufferImg(z_buffer);
+                        break;
                     case SDLK_LSHIFT:
                         yPos -= movement;
                         cameraPos.set(1, -yPos);
@@ -188,11 +229,6 @@ int main(void) {
   
         }
 
-        for(int i = 0; i < widthWindow; ++i) {
-            delete[] z_buffer[i];
-        }
-        delete[] z_buffer;
-
         /*for (int i = 0; i < 4; i++){
             triangles[i].Clip(cilpEdges);
             triangles[i].Projection(Projection, Camera, cameraPos);
@@ -202,10 +238,19 @@ int main(void) {
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderPresent(renderer);
+        for (int i = 0; i < widthWindow; ++i){
+            for (int j = 0; j < heightWindow; ++j){
+                z_buffer[i][j] = std::numeric_limits<double>::infinity(); 
+            }
+        }
 
 
     }
 
+    for(int i = 0; i < widthWindow; ++i) {
+        delete[] z_buffer[i];
+    }
+    delete[] z_buffer;
 
     SDL_RenderPresent(renderer);
     SDL_DestroyRenderer(renderer);
