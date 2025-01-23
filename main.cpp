@@ -12,7 +12,7 @@ const int heightViewport = 1;
 const float NearDistance = 0.5;
 
 float angleOfView = 90; 
-float near = 0.1; 
+float near = 0.01; 
 float far = 10;
 #define PI 3.14159265
 
@@ -28,9 +28,11 @@ void MakeDepthBufferImg(double **z_buffer){
     depth_map.channel(0);
     for (int i = 0; i < 512;i++){
         for (int j = 0; j < 512;j++){
-            std::cout << depth_map[i*512+j] << std::endl;
+            //std::cout << depth_map[i*512+j] << std::endl;
+            std::cout << z_buffer[i][j]*65536*256 << std::endl; 
             unsigned char Color[0];
-            Color[0] = depth_map[i*512+j] * 70; 
+            //if (z_buffer[i][j] < 0) -z_buffer[i][j]; 
+            Color[0] = z_buffer[i][j]*65536*256; 
             depth_map.draw_point(i, j, 0, Color, 1);
         }
     }
@@ -124,6 +126,17 @@ int main(void) {
     trig.setTexture("src/tex4.jpg", true);
     trig1.setTexture("src/tex3.jpg", true);
     trig2.setTexture("src/tex5.jpg", true);
+    //std::vector<Triangle> model = loadObj(renderer, "3dmodels/tomo2/obj/tomo.obj");
+    std::vector<Triangle> model = loadObj(renderer, "3dmodels/cubemodel/cube2.obj");
+    std::cout << model.size() << std::endl;
+    for (int i = 0; i < model.size();i++){
+        std::cout << (float)i/(float)model.size() << std::endl;
+        model[i].setTexture("3dmodels/cubemodel/brick.jpeg");
+    }
+    //model.setTexture("3dmodels/cubemodel/brick.jpeg");
+    //std::vector<Triangle> model = loadObj(renderer, "3dmodels/rifle/ak47.obj");
+
+    std::cout << "polygone: " << model.size() << std::endl;
     unsigned int time = 0;
        double **z_buffer = new double*[widthWindow];
         
@@ -147,8 +160,7 @@ int main(void) {
         cameraPos.set(1, yPos);
         cameraPos.set(2, zPos);
         SDL_RenderClear(renderer);
-
-        
+        /* 
         trig.Projection();
         trig.View(cameraPos);
         trig.Rotatition(90.0f, 0.0f, 0.0f);
@@ -178,6 +190,23 @@ int main(void) {
         trig2.CullFace(cameraPos);
         trig2.FixRender(cameraPos); 
         trig2.Unwrap(z_buffer);
+        */
+        SDL_SetRenderDrawColor(renderer,255, 0, 0, 255);
+        for (int i = 0; i < model.size(); i++){
+            //std::cout << "%" << i << std::endl;
+            model[i].Projection();
+            model[i].View(cameraPos);
+            model[i].Rotatition(90.0f, 0.0f, -90.0f);
+            //x transform error
+            model[i].Transform(1.0f, 0.0f, 0.0f);
+            model[i].isUseZTexture(true);
+            model[i].Clip(cilpEdges);
+            model[i].Apply();
+            model[i].CullFace(cameraPos);            
+            //model[i].FixRender(cameraPos);
+            model[i].Unwrap(z_buffer);
+            //model[i].RenderWireframe(z_buffer); //Unwrap(z_buffer);
+        }
         if (SDL_PollEvent(&event) != 0){
             if(event.type == SDL_QUIT )
             {
@@ -187,7 +216,7 @@ int main(void) {
             }
             if (event.type == SDL_KEYDOWN){
                 std::cout << "global coordinates x y z: " << xPos << " " << yPos << " " << zPos << std::endl; 
-                float movement = 0.1;
+                float movement = 0.2;
                 switch(event.key.keysym.sym)
                 {
                     case SDLK_ESCAPE:
@@ -197,31 +226,31 @@ int main(void) {
                         break;
                     case SDLK_w:
                         zPos += movement;                        
-                        cameraPos.set(2, -zPos);
+                        cameraPos.set(2, zPos);
                         break;
                     case SDLK_s:
                         zPos -= movement;
-                        cameraPos.set(2, -zPos);
+                        cameraPos.set(2, zPos);
                         break;
                     case SDLK_a:
                         xPos -= movement;
-                        cameraPos.set(0, -xPos);
+                        cameraPos.set(0, xPos);
                         break;
                     case SDLK_d:
                         xPos += movement;
-                        cameraPos.set(0, -xPos);
+                        cameraPos.set(0, xPos);
                         break;
                     case SDLK_b:
                         MakeDepthBufferImg(z_buffer);
                         break;
                     case SDLK_LSHIFT:
                         yPos -= movement;
-                        cameraPos.set(1, -yPos);
+                        cameraPos.set(1, yPos);
                         break;
 
                     case SDLK_LCTRL:
                         yPos += movement;
-                        cameraPos.set(1, -yPos);
+                        cameraPos.set(1, yPos);
                         break;
 
                 }

@@ -317,6 +317,8 @@ class Triangle{
         Mat4x4 Rotation_m;
         Mat4x4 Projection_m;
         Mat4x4 Transformation_m;
+
+        float x_fix_error;
     public:
         Triangle(SDL_Renderer *rend, Vec4<float> Vert1, Vec4<float> Vert2, Vec4<float> Vert3){
             renderer = rend;
@@ -358,6 +360,27 @@ class Triangle{
             st1 = Vec2<float>(1, 0);
             st0 = Vec2<float>(0, 1);
 
+        }
+        void setSt1(Vec2<float> st){
+            st0 = st;
+        }
+        void setSt2(Vec2<float> st){
+            st1 = st;
+        }
+        void setSt3(Vec2<float> st){
+            st2 = st;
+        }
+        void setSt1(float u, float v){
+            st0.set(0, u);
+            st0.set(1, v);
+        }
+        void setSt2(float u, float v){
+            st1.set(0, u);
+            st1.set(1, v);
+        }
+        void setSt3(float u, float v){
+            st2.set(0, u);
+            st2.set(1, v);
         }
         void Projection(){
             float aspect_ratio = widthWindow / heightWindow;
@@ -405,6 +428,7 @@ class Triangle{
             Transformation_m = TransformationMat; 
         }
         void Transform(float x, float y, float z){
+            x_fix_error = x;
             Mat4x4 TransformationMat(
                 1, 0, 0, x,
                 0, 1, 0, y,
@@ -489,27 +513,36 @@ class Triangle{
         }
         void CullFace(Vec3<float> startPos){
             CalculateNormal();
-            float similarity = Dot(NormalTriangle, startPos);
+            //Vec3 vecView = MidPoint - startPos; 
+            //Vec3 vecView = startPos - NormalTriangle; 
+
+            float similarity = Dot(Vertex01, NormalTriangle);
+            //NormalTriangle.show();
             if (similarity < 0){
+                //std::cout << "Dot: " << similarity << std::endl; 
                 //NormalTriangle.show();
                 //Vec1_3.show();
-                std::cout << "Dot: " << similarity << std::endl; 
                 isRender = false;        
             }else{
                 isRender = true;        
             }
         }
         void FixRender(Vec3<float> startPos){
-            if (!isRender) return;
+            if (startPos.get(2) < x_fix_error){
+                isRender = true;       
+            }else{
+                isRender = false;       
+            }
+            /*if (!isRender) return;
 
-            Vec3<float> zLine(0,0,1);
-            float similarity = Dot(MidPoint+zLine, startPos);
+            //Vec3 vecView = MidPoint + startPos;
+            float similarity = Dot(Vertex01, startPos);
 
-            if (similarity > 0){
+            if (similarity < 0){
                 isRender = false;        
             }else{
                 isRender = true;        
-            }
+            }*/
         }
         /*
         void Projection(Mat4x4 projetion, Mat4x4 camera, Mat4x4 transform, Mat4x4 rotate, Vec3<float> startPos){
@@ -602,7 +635,9 @@ class Triangle{
             }
         }
         */
-
+        void setNormal(Vec3<float> normal){
+            NormalTriangle = normal;
+        }
         void Clip(std::vector<std::vector<Vec2<float>>> cilp){
             if (isRender){
                 SutherlandHodgman(renderer, ScreenVertex01, ScreenVertex02, ScreenVertex03, cilp);
@@ -665,7 +700,7 @@ class Triangle{
             std::cout << "----------------" << std::endl;
 
         }
-        void RenderWireframe(double **z_buffer, Vec3<float> startPos){
+        void RenderWireframe(double **z_buffer){
 
             trig_struct.vert1 = Vertex01; 
             trig_struct.vert2 = Vertex02;
@@ -685,9 +720,17 @@ class Triangle{
 
 };
 
+struct textureTriangle{
+    int index;
+    float u;
+    float v;
+};
+
 std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
     std::ifstream file_model(path);
     std::vector<std::pair<Vec4<float>, int>> obj_verticies;
+    std::vector<textureTriangle> obj_texture;
+
     std::vector<Triangle> faces;
 
     if (!file_model.is_open()) {
@@ -695,12 +738,15 @@ std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
     }
     std::string file_model_data;
     int numVertex = 1;
+    int numTriangle = 0;
+    int numTexture = 0;
     while (std::getline(file_model, file_model_data))
     {
         std::vector<std::string> data_model = tokenize(file_model_data, ' ');
         if (data_model[0].compare("v") == 0){
             std::pair<Vec4<float>, int> VertexData;
-             
+            numTriangle++;
+            std::cout << numTriangle << std::endl;
             //std::cout << "vertex: " << data_model[1] << " " << data_model[2] << " " << data_model[3] << std::endl;
             Vec4 Vertex(std::stof(data_model[1]), std::stof(data_model[2]), std::stof(data_model[3]), 1.0f);
             VertexData.first = Vertex;
@@ -708,34 +754,82 @@ std::vector<Triangle> loadObj(SDL_Renderer *rend, std::string path){
             obj_verticies.push_back(VertexData);
             numVertex++;
         }
+        if (data_model[0].compare("vt") == 0){
+            numTexture++;
+            std::cout << "index: " << numTexture << std::endl;
+            textureTriangle texel;
+            texel.index = numTexture;
+            texel.u = std::stof(data_model[1]);
+            texel.v = std::stof(data_model[2]);
+            obj_texture.push_back(texel);
+            /*for (int i = 0; i < obj_verticies.size();i++){
+                float u = std::stof(data_model[1]); 
+                float v = std::stof(data_model[2]);
+                std::cout << "u: " << u << " v: " << v << std::endl;
+            }*/
+        }
         if (data_model[0].compare("f") == 0){
 
             Vec4<float> Vertex1;
             Vec4<float> Vertex2;
             Vec4<float> Vertex3;
+            std::vector<std::string> face_model1 = tokenize(data_model[1], '/');
+            std::vector<std::string> face_model2 = tokenize(data_model[2], '/');
+            std::vector<std::string> face_model3 = tokenize(data_model[3], '/');
             for (int i = 0; i < obj_verticies.size();i++){
-                
-
-
-                if (obj_verticies[i].second == std::stoi(data_model[1])){
+                if (obj_verticies[i].second == std::stoi(face_model1[0])){
+                    //std::stoi(data_model[1]))
+                    //std::cout << "data_model[1]: " << data_model[1] << std::endl;
+                    //std::cout << "face_model1[0]: " << face_model1[0] << std::endl;
 
                     Vertex1 = obj_verticies[i].first; 
                 }
-                if (obj_verticies[i].second == std::stoi(data_model[2])){
+                if (obj_verticies[i].second == std::stoi(face_model2[0])){
+                    //std::stoi(data_model[2]))
+                    //std::cout << "face_model2[0]: " << face_model2[0] << std::endl;
 
                     Vertex2 = obj_verticies[i].first;
                 }
-                if (obj_verticies[i].second == std::stoi(data_model[3])){
+                if (obj_verticies[i].second == std::stoi(face_model3[0])){
+                    //std::stoi(data_model[3]))
+                    //std::cout << "face_model3[0]: " << face_model3[0] << std::endl;
 
                     Vertex3 = obj_verticies[i].first;
                 }
             }
+
+
+            Vec3<float> Vertex1norm;
+            Vertex1norm = Vertex1.get_Vec3();
+            Vec3<float> Vertex2norm;
+            Vertex2norm = Vertex2.get_Vec3();
+            Vec3<float> Vertex3norm;
+            Vertex3norm = Vertex3.get_Vec3();
+            Vec3<float> NormalTriangle;
+
+            Vec3 Vec1 = Vertex2norm - Vertex1norm;
+            Vec3 Vec2 = Vertex3norm - Vertex1norm;
+            NormalTriangle = CrossProduct(Vec1, Vec2);
+
             Triangle trig(rend, Vertex1, Vertex2, Vertex3);
+            trig.setNormal(NormalTriangle.normalize());
+            for (int i = 0; i < obj_texture.size();i++){
+                if(obj_texture[i].index == std::stoi(face_model1[1])){
+                    trig.setSt1(obj_texture[i].u, obj_texture[i].v);
+                }
+                if(obj_texture[i].index == std::stoi(face_model2[1])){
+                    trig.setSt2(obj_texture[i].u, obj_texture[i].v);
+                }
+                if(obj_texture[i].index == std::stoi(face_model3[1])){
+                    trig.setSt3(obj_texture[i].u, obj_texture[i].v);
+                }
+            }
             faces.push_back(trig);
             
         }
-    }
 
+    }
+    //std::cout << faces.size() << std::endl; 
     return faces;
 }
 

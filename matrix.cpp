@@ -87,6 +87,36 @@ class Vec3{
             Vec2<TypeNum> pos(x, y);
             return pos;
         }
+        Vec3<TypeNum> normalize(){
+            TypeNum res[3];
+            if (res[0] > 1){ 
+                res[0] = 1;
+            }else if (res[0] < -1){
+                res[0] = -1;
+            }else{
+                res[0] = res[0];
+            }
+
+            if (res[1] > 1){ 
+                res[1] = 1;
+            }else if (res[1] < -1){
+                res[1] = -1;
+            }else{
+                res[1] = res[1];
+            }
+
+            if (res[2] > 1){ 
+                res[2] = 1;
+            }else if (res[2] < -1){
+                res[2] = -1;
+            }else{
+                res[2] = res[2];
+            }
+
+            Vec3<TypeNum> vectorNew(res[0], res[1], res[2]);
+            return vectorNew;
+        }
+
         Vec3<TypeNum> operator-(Vec3<TypeNum> &vec2)
         {
             TypeNum res[3];
